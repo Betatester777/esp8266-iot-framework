@@ -1,5 +1,5 @@
-#ifndef UPDATER_H
-#define UPDATER_H
+#ifndef __UPDATER_H__
+#define __UPDATER_H__
 
 #include <Arduino.h>
 

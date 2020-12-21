@@ -1,9 +1,60 @@
 [
     {
-        "name": "projectName",
-        "label": "Project Name",
+        "name": "useNTP",
+        "label": "Enable NTP",
+        "type": "uint8_t",
+        "control_type":"select",
+        "value": 0,       
+        "options":[
+            {"text": "OFF", "value": 0},
+            {"text": "ON", "value": 1}
+        ]
+
+    },
+    {
+        "name": "operationMode",
+        "label": "Operation mode",
+        "type": "uint8_t",
+        "control_type":"select",
+        "value": 2,
+        "options":[
+            {"text": "MANUAL", "value": 0},
+            {"text": "POWER", "value": 1},
+            {"text": "TIMER", "value": 2}
+        ]
+    },
+    {
+        "name": "serverIp",
+        "label": "IP address",
         "type": "char",
-        "length": 32,
-        "value": "ESP8266 IoT Framework"
+        "control_type":"ip_address",
+        "length": 15,
+        "value": "0.0.0.0",
+        "placeholder":"xxx.xxx.xxx.xxx"
+    },
+    {
+        "name": "powerThreshold",
+        "label": "Power threshold",
+        "type": "uint32-t",
+        "control_type":"text_input",
+        "value": "0"
+    },
+    {
+        "name": "measureInterval",
+        "label": "Value request interval (sec.)",
+        "type": "uint32-t",
+        "control_type":"text_input",
+        "value": "3000"
+    },
+    {
+        "name": "enableStatusLED",
+        "label": "Enable status LED",
+        "type": "uint8_t",
+        "control_type":"select",
+        "value": 0,       
+        "options":[
+            {"text": "OFF", "value": 0},
+            {"text": "ON", "value": 1}
+        ]
     }
 ]

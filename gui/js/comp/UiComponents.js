@@ -4,12 +4,13 @@ import { normalize } from "styled-normalize";
 import { Loader, Menu as MenuIcon } from "react-feather";
 import PropTypes from "prop-types";
 
-export const cPrimary = "#0055ff"; 
-export const cPrimaryHover = "#0066ee"; 
+export const cPrimary = "#0055ff";
+export const cPrimaryHover = "#0066ee";
 export const cHeader = "#111";
-export const cHeaderHover = "#333"; 
+export const cHeaderHover = "#333";
 export const cSecondary = "#ff00cc";
-export const cSecondaryHover = "#cc0099"; 
+export const cSecondaryHover = "#cc0099";
+
 
 export const GlobalStyle = createGlobalStyle`
   
@@ -304,6 +305,17 @@ export const Form = styled.form`
         width: auto;
         margin:12px 0px;
     }
+
+    select{
+        width:250px;
+        max-width:100%;
+        box-sizing: border-box;
+        padding:0.3em;
+    }
+
+    .input_small{
+        width:250px !important;
+    }
 `;
 
 export const buttonStyle = css` 
@@ -397,10 +409,10 @@ export function Fetch(props) {
                     method: "POST",
                 })
                 .then((response) => { return response.status; })
-                .then((status) => { 
+                .then((status) => {
                     if (status == 200) {
-                        if (typeof props.onFinished === "function") {props.onFinished();}
-                    } 
+                        if (typeof props.onFinished === "function") { props.onFinished(); }
+                    }
                 });
         } else {
             fetch(props.href)
@@ -409,7 +421,7 @@ export function Fetch(props) {
                     if (status == 200) {
                         if (typeof props.onFinished === "function") { props.onFinished(); }
                     }
-                });  
+                });
         }
     }}>{props.children}</span>;
 }

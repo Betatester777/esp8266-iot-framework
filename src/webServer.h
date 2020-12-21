@@ -1,7 +1,21 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef __SERVER_H__
+#define __SERVER_H__
 
 #include <ESPAsyncWebServer.h>
+#include "ArduinoJson.h"
+#include "LittleFS.h"
+
+// Include the header file we create with webpack
+#include "generated/html.h"
+
+//Access to other classes for GUI functions
+#include "WiFiManager.h"
+#include "configManager.h"
+
+#include "updater.h"
+
+#include "states.h"
+
 
 class webServer
 {

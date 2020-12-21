@@ -1,15 +1,36 @@
 #include "webServer.h"
-#include "ArduinoJson.h"
-#include "LittleFS.h"
 
-// Include the header file we create with webpack
-#include "generated/html.h"
+String config2json(){
+    String JSON;
+    StaticJsonDocument<1024> jsonBuffer;
 
-//Access to other classes for GUI functions
-#include "WiFiManager.h"
-#include "configManager.h"
-#include "updater.h"
-#include "dashboard.h"
+    jsonBuffer["useNTP"] = configManager.data.useNTP;
+    jsonBuffer["operationMode"] = configManager.data.operationMode;
+    jsonBuffer["serverIp"] = configManager.data.serverIp;
+    jsonBuffer["powerThreshold"] = configManager.data.powerThreshold;
+    jsonBuffer["measureInterval"] = configManager.data.measureInterval;
+    jsonBuffer["enableStatusLED"] = configManager.data.enableStatusLED;
+    serializeJson(jsonBuffer, JSON);
+    Serial.println(JSON);
+    return JSON;
+}
+
+void json2config(String configData){
+    Serial.println(configData);
+
+    DynamicJsonDocument doc(1024);
+
+    deserializeJson(doc, configData);
+    JsonObject obj = doc.as<JsonObject>();
+
+    configManager.data.useNTP= obj[String("useNTP")].as<uint8_t>();
+    configManager.data.operationMode= obj[String("operationMode")].as<uint8_t>();
+    strcpy(configManager.data.serverIp, obj[String("serverIp")].as<String>().c_str());
+    configManager.data.powerThreshold= obj[String("powerThreshold")].as<uint32_t>();
+    configManager.data.measureInterval= obj[String("measureInterval")].as<uint32_t>();
+    configManager.data.enableStatusLED= obj[String("enableStatusLED")].as<uint8_t>();
+
+}
 
 void webServer::begin()
 {
@@ -24,7 +45,8 @@ void webServer::begin()
     server.onNotFound(serveProgmem);
 
     //handle uploads
-    server.on(PSTR("/upload"), HTTP_POST, [](AsyncWebServerRequest *request) {}, handleFileUpload);
+    server.on(
+        PSTR("/upload"), HTTP_POST, [](AsyncWebServerRequest *request) {}, handleFileUpload);
 
     bindAll();
 }
@@ -96,7 +118,7 @@ void webServer::bindAll()
     });
 
     //update from LittleFS
-    server.on(PSTR("/api/update"), HTTP_POST, [](AsyncWebServerRequest *request) {        
+    server.on(PSTR("/api/update"), HTTP_POST, [](AsyncWebServerRequest *request) {
         updater.requestStart("/" + request->arg("filename"));
         request->send(200, PSTR("text/html"), "");
     });
@@ -114,90 +136,73 @@ void webServer::bindAll()
 
     //send binary configuration data
     server.on(PSTR("/api/config/get"), HTTP_GET, [](AsyncWebServerRequest *request) {
-        AsyncResponseStream *response = request->beginResponseStream(PSTR("application/octet-stream"));
-        response->write(reinterpret_cast<char*>(&configManager.data), sizeof(configManager.data));
-        request->send(response);
+        request->send(200, PSTR("'application/json'"), config2json());
     });
 
     //receive binary configuration data from body
-    server.on(
-        PSTR("/api/config/set"), HTTP_POST,
-        [this](AsyncWebServerRequest *request) {},
-        [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {},
-        [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-            
-            static uint8_t buffer[sizeof(configManager.data)];
-            static uint32_t bufferIndex = 0;
+    server.on(PSTR("/api/config/set"), HTTP_POST,
+        [](AsyncWebServerRequest *request) {
+        uint8_t lastOperationMode=configManager.data.operationMode;
+        json2config(request->arg("data"));
+        configManager.save();
 
-            for (size_t i = 0; i < len; i++)
-            {
-                buffer[bufferIndex] = data[i];
-                bufferIndex++;
-            }
+        if(lastOperationMode!=configManager.data.operationMode){
+            fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
+        }
+        Serial.println("save config success");      
 
-            if (index + len == total)
-            {
-                bufferIndex = 0;
-                configManager.saveRaw(buffer);
-                request->send(200, PSTR("text/html"), "");
-            }
+        config2json();
 
-        });
 
-    //receive binary configuration data from body
-    server.on(
-        PSTR("/api/dash/set"), HTTP_POST,
-        [this](AsyncWebServerRequest *request) {},
-        [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {},
-        [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-            memcpy(reinterpret_cast<uint8_t *>(&(dash.data)) + (request->arg("start")).toInt(), data, (request->arg("length")).toInt());
-            request->send(200, PSTR("text/html"), "");
-        });
+        
+        request->send(200, PSTR("'text/html'"), "OK");
+        }
+    );
 }
 
 // Callback for the html
 void webServer::serveProgmem(AsyncWebServerRequest *request)
-{    
-    // Dump the byte array in PROGMEM with a 200 HTTP code (OK)
-    AsyncWebServerResponse *response = request->beginResponse_P(200, PSTR("text/html"), html, html_len);
+{
+        // Dump the byte array in PROGMEM with a 200 HTTP code (OK)
+        AsyncWebServerResponse *response = request->beginResponse_P(200, PSTR("text/html"), html, html_len);
 
-    // Tell the browswer the content is Gzipped
-    response->addHeader(PSTR("Content-Encoding"), PSTR("gzip"));
-    
-    request->send(response);    
+        // Tell the browswer the content is Gzipped
+        response->addHeader(PSTR("Content-Encoding"), PSTR("gzip"));
+
+        request->send(response);    
 }
 
 void webServer::handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
-    static File fsUploadFile;
+        static File fsUploadFile;
 
-    if (!index)
-    {
-        Serial.println(PSTR("Start file upload"));
-        Serial.println(filename);
+        if (!index)
+        {
+            Serial.println(PSTR("Start file upload"));
+            Serial.println(filename);
 
-        if (!filename.startsWith("/"))
-            filename = "/" + filename;
+            if (!filename.startsWith("/"))
+                filename = "/" + filename;
 
-        fsUploadFile = LittleFS.open(filename, "w");
-    }
+            fsUploadFile = LittleFS.open(filename, "w");
+        }
 
-    for (size_t i = 0; i < len; i++)
-    {
-        fsUploadFile.write(data[i]);
-    }
+        for (size_t i = 0; i < len; i++)
+        {
+            fsUploadFile.write(data[i]);
+        }
 
-    if (final)
-    {
-        String JSON;
-        StaticJsonDocument<100> jsonBuffer;
+        if (final)
+        {
+            String JSON;
+            StaticJsonDocument<100> jsonBuffer;
 
-        jsonBuffer["success"] = fsUploadFile.isFile();
-        serializeJson(jsonBuffer, JSON);
+            jsonBuffer["success"] = fsUploadFile.isFile();
+            serializeJson(jsonBuffer, JSON);
 
-        request->send(200, PSTR("text/html"), JSON);
-        fsUploadFile.close();        
-    }
+            request->send(200, PSTR("text/html"), JSON);
+            fsUploadFile.close();
+        }
 }
 
 webServer GUI;

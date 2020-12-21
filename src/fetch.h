@@ -1,5 +1,5 @@
-#ifndef FETCH_H
-#define FETCH_H
+#ifndef __FETCH_H__
+#define __FETCH_H__
 
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>

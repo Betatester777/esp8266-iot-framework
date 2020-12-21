@@ -58,6 +58,38 @@ const FileLine = styled(Flex)`
     }
 `;
 
+const FileLabel = styled.label`
+    ${buttonStyle}  
+
+    display:inline-block;
+    width:100px;
+    text-align:center;
+    
+    @media (max-width: 500px) 
+    {
+        width:90px; 
+    }
+
+    &.busy 
+    {
+        cursor: default;
+        :hover
+        {
+            background-color: ${cPrimary};
+        }
+    }
+
+    svg {
+        width:1.2em;
+        height:1.2em;
+        vertical-align:-0.25em;
+    }
+
+    input[type="file"] {
+        display: none;
+    } 
+`;
+
 export function FileListing(props) {
     const [state, setState] = useState({ files: [], used: 0, max: 0});
 
@@ -190,35 +222,3 @@ function Upload(props) {
 
     return render;
 }
-
-const FileLabel = styled.label`
-    ${buttonStyle}  
-
-    display:inline-block;
-    width:100px;
-    text-align:center;
-    
-    @media (max-width: 500px) 
-    {
-        width:90px; 
-    }
-
-    &.busy 
-    {
-        cursor: default;
-        :hover
-        {
-            background-color: ${cPrimary};
-        }
-    }
-
-    svg {
-        width:1.2em;
-        height:1.2em;
-        vertical-align:-0.25em;
-    }
-
-    input[type="file"] {
-        display: none;
-    } 
-`;

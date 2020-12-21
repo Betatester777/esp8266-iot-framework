@@ -4,7 +4,7 @@ import { Form, Button, Spinner, Confirmation } from "./UiComponents";
 import { Wifi, Lock, Server, CornerDownRight } from "react-feather";
 
 export function WifiPage(props) {
-    const [state, setState] = useState({ captivePortal: [], ssid: []});
+    const [state, setState] = useState({ captivePortal: [], ssid: [] });
     const [forgetModal, setForgetModal] = useState(false);
     const [saveModal, setSaveModal] = useState(false);
     const [dhcpForm, setDhcpForm] = useState(true);
@@ -22,9 +22,19 @@ export function WifiPage(props) {
 
     function changeWifi() {
         if (dhcpForm) {
-            fetch(`${props.API}/api/wifi/set?ssid=${escape(document.getElementById("ssid").value.trim())}&pass=${escape(document.getElementById("pass").value.trim())}`, { method: "POST" });
+            fetch(
+                `${props.API}/api/wifi/set?ssid=${escape(document.getElementById("ssid").value.trim())}&pass=${escape(document.getElementById("pass").value.trim())}`,
+                {
+                    method: "POST"
+                }
+            );
         } else {
-            fetch(`${props.API}/api/wifi/setStatic?ssid=${escape(document.getElementById("ssid").value.trim())}&pass=${escape(document.getElementById("pass").value.trim())}&ip=${escape(document.getElementById("ip").value.trim())}&sub=${escape(document.getElementById("sub").value.trim())}&gw=${escape(document.getElementById("gw").value.trim())}&dns=${escape(document.getElementById("dns").value.trim())}`, { method: "POST" });
+            fetch(
+                `${props.API}/api/wifi/setStatic?ssid=${escape(document.getElementById("ssid").value.trim())}&pass=${escape(document.getElementById("pass").value.trim())}&ip=${escape(document.getElementById("ip").value.trim())}&sub=${escape(document.getElementById("sub").value.trim())}&gw=${escape(document.getElementById("gw").value.trim())}&dns=${escape(document.getElementById("dns").value.trim())}`,
+                {
+                    method: "POST"
+                }
+            );
             document.getElementById("ip").value = "";
             document.getElementById("gw").value = "";
             document.getElementById("sub").value = "";
@@ -32,7 +42,7 @@ export function WifiPage(props) {
             setDhcpForm(true);
         }
         document.getElementById("ssid").value = "";
-        document.getElementById("pass").value = "";        
+        document.getElementById("pass").value = "";
     }
 
     let dhcp = <></>;
@@ -52,7 +62,7 @@ export function WifiPage(props) {
                 <input type="text" id="dns" name="dns" autoCapitalize="none" />
             </p>
         </>;
-    }    
+    }
 
     const form = <><Form>
         <p><label htmlFor="ssid"><Wifi /> SSID:</label>
@@ -60,25 +70,27 @@ export function WifiPage(props) {
         </p>
         <p><label htmlFor="pass"><Lock /> Password:</label>
             <input type="text" id="pass" name="pass" autoCapitalize="none" />
-        </p>   
-        <p><label htmlFor="dhcp"><Server /> DHCP:</label>
-            <input type="checkbox" id="dhcp" name="dhcp" checked={dhcpForm} onChange={()=>setDhcpForm(!dhcpForm)} />
         </p>
-        {dhcp}      
+        <p><label htmlFor="dhcp"><Server /> DHCP:</label>
+            <input type="checkbox" id="dhcp" name="dhcp" checked={dhcpForm} onChange={() => setDhcpForm(!dhcpForm)} />
+        </p>
+        {dhcp}
     </Form>
-    <Button onClick={() => setSaveModal(true)}>Save</Button>
+        <Button onClick={() => setSaveModal(true)}>Save</Button>
     </>;
-    
-    let page = <><h2>WiFi Settings</h2> 
-        <h3>Status</h3></>;
-    
+
+    let page = <div>
+        <h2>WiFi Settings</h2>
+        <h3>Status</h3>
+    </div>;
+
     let connectedTo;
     if (state.captivePortal === true) {
         connectedTo = "Captive portal running";
     } else if (state.captivePortal === false) {
         connectedTo = <>Connected to {state.ssid} (<a onClick={() => setForgetModal(true)}>Forget</a>)</>;
     }
-    
+
     page = <>{page}<p>{connectedTo == null ? <Spinner /> : connectedTo}</p></>;
 
     page = <>{page}<h3>Update credentials</h3>{form}

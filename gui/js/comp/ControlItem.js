@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 
 import { Button } from "./UiComponents";
 import { Upload } from "react-feather";
-
-import Dash from "../dashboard.json";
 import { binsize } from "./../functions/configHelpers";
 
 export function ControlItem(props) {
@@ -29,7 +27,7 @@ export function ControlItem(props) {
         }
 
         if (saving && target != null) {
-            const sizes = binsize(props.name, Dash);
+            const sizes = binsize(props.name, []);
             const binData = new ArrayBuffer(sizes[1]);
             const binDataView = new DataView(binData);
             switch (props.dataType) {
@@ -83,13 +81,29 @@ export function ControlItem(props) {
         props.conditionalAttributes.checked = data;
         checkbox = true;
     } else {
-        savebtn = <Button onClick={(e) => {            
-            e.preventDefault();
-            save();
-        }}><Upload /></Button>;
+        savebtn =   <Button onClick={(e) => {            
+                                e.preventDefault();
+                                save();
+                            }}>
+                        <Upload />
+                    </Button>;
     }
 
-    return <><input onChange={(e) => { if (checkbox) { setTarget(e.target.checked); save(); } else { setTarget(e.target.value); } }} type={props.type} id={props.name} name={props.name} value={data} {...props.conditionalAttributes} />{savebtn}</>;
+    return <>
+            <input 
+                onChange={(e) => { 
+                                if (checkbox) { 
+                                    setTarget(e.target.checked); save(); 
+                                } else { 
+                                    setTarget(e.target.value); 
+                                } 
+                            }} 
+                type={props.type} 
+                id={props.name} name={props.name} 
+                value={data} 
+                {...props.conditionalAttributes} />
+                {savebtn}
+            </>;
 }
 
 ControlItem.propTypes = {

@@ -5,6 +5,7 @@ const HtmlWebpackInlineSourcePlugin = require("html-webpack-inline-source-plugin
 const CompressionPlugin = require("compression-webpack-plugin");
 const EventHooksPlugin = require("event-hooks-webpack-plugin");
 
+
 const fs = require("fs");
 const path = require("path");
 const del = require("del");
@@ -24,16 +25,24 @@ module.exports = (env, argv) => ({
             {
                 test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
-                use: {
-                    loader: "babel-loader",
-                },
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: ['@babel/preset-env', '@babel/preset-react'],
+                            plugins: [
+                                ['@babel/plugin-proposal-class-properties']
+                            ]
+                        }
+                    }
+                ]
             },
             {
                 test: /\.html$/,
                 use: [
                     {
                         loader: "html-loader",
-                        options: { minimize: true },
+                        options: { minimize: false },
                     },
                 ],
             },
@@ -69,6 +78,7 @@ module.exports = (env, argv) => ({
     optimization: {
         minimize: true,        
     },
+    devtool: 'source-map',
 
     resolve: {
         alias: {
@@ -125,7 +135,7 @@ module.exports = (env, argv) => ({
                     wstream.end();
 
                     del([source]);
-                    del("./dist/");
+                    //del("./dist/");
                 }
             },
         }),

@@ -1,5 +1,5 @@
-#ifndef TIMESYNC_H
-#define TIMESYNC_H
+#ifndef __TIMESYNC_H__
+#define __TIMESYNC_H__
 
 #include <Arduino.h>
 
