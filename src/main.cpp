@@ -7,7 +7,7 @@
 #include <ConfigManager.h>
 #include <TimeSync.h>
 #include <States.h>
-#include <SMAModbusSlave.h>
+#include <SMA/SMAModbusSlave.h>
 
 unsigned long buttonTimer = 0;
 unsigned long longPressTime = 500;

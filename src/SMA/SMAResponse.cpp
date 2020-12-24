@@ -1,4 +1,4 @@
-#include <SMAResponse.h>
+#include <SMA/SMAResponse.h>
 
 SMAResponse::SMAResponse(unsigned char *buffer, int size)
 {

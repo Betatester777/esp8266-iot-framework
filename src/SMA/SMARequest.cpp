@@ -1,4 +1,4 @@
-#include <SMARequest.h>
+#include <SMA/SMARequest.h>
 
 SMARequest::SMARequest(uint16_t transaction_id,
                        uint16_t protocol_id,

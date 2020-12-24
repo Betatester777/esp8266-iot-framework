@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <SMARequest.h>
-#include <SMAResponse.h>
+#include <SMA/SMARequest.h>
+#include <SMA/SMAResponse.h>
 
 class SMAModbusSlave
 {
@@ -32,5 +32,7 @@ private:
   uint16_t _quantityOfRegisters;
   uint32_t _registerValue;
 };
+
+extern SMAModbusSlave *smaModbusSlave;
 
 #endif

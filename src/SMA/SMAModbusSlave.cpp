@@ -1,4 +1,4 @@
-#include <SMAModbusSlave.h>
+#include <SMA/SMAModbusSlave.h>
 bool SMAModbusSlave::doConnect = false;
 
 SMAModbusSlave::SMAModbusSlave(String serverIp, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue))

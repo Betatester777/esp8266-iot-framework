@@ -4,7 +4,6 @@
 #include <Ticker.h>
 #include <StateMachine.h>
 #include <ConfigManager.h>
-#include <SMAModbusSlave.h>
 
 #define FIRMWARE_VERSION = "0.0.1"
 
@@ -55,6 +54,5 @@ extern State * stateOperationMode_PowerOn;
 extern Fsm * fsmOperationMode;
 extern uint32_t measuredPower;
 extern bool enableMeasurePower;
-extern SMAModbusSlave *inverterSlave;
 
 #endif
