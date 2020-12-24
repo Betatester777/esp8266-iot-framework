@@ -12,7 +12,8 @@
 #define LEDPinPow 15
 #define ButtonPin 0
 #define KeyBounce 50              //Millisekunden zwischen 2xtasten
-#define KeyLongPressDuration 1500 //Millisekunden für langen Tastendruck bei Sonoff Touch als Sender
+#define KeyLongPressDuration 400 //Millisekunden für langen Tastendruck bei Sonoff Touch als Sender
+#define ButtonMode INPUT_PULLUP
 
 #define MANUAL_OFF "OperationMode_ManualOff"
 #define MANUAL_ON "OperationMode_ManualOn"

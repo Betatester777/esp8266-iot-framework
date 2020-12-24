@@ -101,8 +101,6 @@ void fsm_setup()
 {
   pinMode(LEDPinSwitch, OUTPUT);
   pinMode(RelayPin, OUTPUT);
-  pinMode(ButtonPin, INPUT_PULLUP);
-
   digitalWrite(LEDPinSwitch, HIGH);
 
   stateOperationMode_ManualOff = new State(MANUAL_OFF, onEnter_OperationMode_ManualOff, NULL, NULL);

@@ -4,10 +4,8 @@
 #include <Arduino.h>
 #include <DNSServer.h>
 #include <memory>
-
 class WifiManager
 {
-
 private:
     DNSServer *dnsServer;
     String ssid;
@@ -19,13 +17,12 @@ private:
     bool reconnect = false;
     bool inCaptivePortal = false;
     char const *captivePortalName;
-    
     void startCaptivePortal(char const *apName);
     void stopCaptivePortal();
-    void connectNewWifi(String newSSID, String newPass);    
+    void connectNewWifi(String newSSID, String newPass);
     void storeToEEPROM();
 
-public : 
+public:
     void begin(char const *apName);
     void loop();
     void forget();
@@ -38,5 +35,3 @@ public :
 extern WifiManager WiFiManager;
 
 #endif
-
-
