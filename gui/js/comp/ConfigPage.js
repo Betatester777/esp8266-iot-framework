@@ -9,21 +9,21 @@ const ipProps = {
     placeholderChar: '\u2000',
     mask: value => Array(value.length).fill(/[\d.]/),
     pipe: value => {
-      if (value === '.' || value.endsWith('..')) return false;
-  
-      const parts = value.split('.');
-  
-      if (
-        parts.length > 4 ||
-        parts.some(part => part === '00' || part < 0 || part > 255)
-      ) {
-        return false;
-      }
-  
-      return value;
+        if (value === '.' || value.endsWith('..')) return false;
+
+        const parts = value.split('.');
+
+        if (
+            parts.length > 4 ||
+            parts.some(part => part === '00' || part < 0 || part > 255)
+        ) {
+            return false;
+        }
+
+        return value;
     },
-  };
-  
+};
+
 export class ConfigPage extends React.Component {
 
     constructor(props) {
@@ -35,17 +35,27 @@ export class ConfigPage extends React.Component {
             dataSaving: false
         };
 
-        this.controls = {
-            useNTP: Config.find(obj => { return obj.name === "useNTP"; }),
-            operationMode: Config.find(obj => { return obj.name === "operationMode"; }),
-            serverIp: Config.find(obj => { return obj.name === "serverIp"; }),
-            powerThreshold: Config.find(obj => { return obj.name === "powerThreshold"; }),
-            measureInterval: Config.find(obj => { return obj.name === "measureInterval"; }),
-            enableStatusLED: Config.find(obj => { return obj.name === "enableStatusLED"; }),
-        }
+        this.fields = Object.freeze([
+            "useNTP",
+            "operationMode",
+            "serverIp", "serverPort",
+            "powerThresholdHigh",
+            "powerThresholdLow",
+            "measureInterval",
+            "enableStatusLED",
+        ]);
+
+        this.controls = {};
+
+        this.fields.map((field) => {
+            this.controls[field] = Config.find(obj => { return obj.name === field; });
+            return;
+        });
 
         this.fetchData = this.fetchData.bind(this);
         this.handleSave = this.handleSave.bind(this);
+        this.onNumericInput=this.onNumericInput.bind(this);
+        this.onNumericChange=this.onNumericChange.bind(this);
     }
 
     fetchData() {
@@ -53,23 +63,15 @@ export class ConfigPage extends React.Component {
         fetch(`${this.props.API}/api/config/get`)
             .then(response => response.json())
             .then((configData) => {
-                this.setState({
-                    dataReceived: true,
-                    dataSaving: false,
-                    useNTP_initial: configData.useNTP,
-                    operationMode_initial: configData.operationMode,
-                    serverIp_initial: configData.serverIp,
-                    powerThreshold_initial: configData.powerThreshold,
-                    measureInterval_initial: configData.measureInterval,
-                    enableStatusLED_initial: configData.enableStatusLED,
-                    useNTP: configData.useNTP,
-                    operationMode: configData.operationMode,
-                    serverIp: configData.serverIp,
-                    powerThreshold: configData.powerThreshold,
-                    measureInterval: configData.measureInterval,
-                    enableStatusLED: configData.enableStatusLED,
-                }
-                );
+                let newState={  dataReceived: true,dataSaving: false};
+
+                this.fields.map((field) => {
+                    newState[field]= configData[field];
+                    newState[`${field}_initial`]= configData[field];
+                    return;
+                });
+
+                this.setState(newState);
             })
             .catch((error) => {
                 // handle your errors here
@@ -81,17 +83,14 @@ export class ConfigPage extends React.Component {
     handleSave(event) {
         event.preventDefault();
         let data = new FormData();
-        data.append("data", JSON.stringify({
-            useNTP: this.state.useNTP,
-            operationMode: this.state.operationMode,
-            serverIp: this.state.serverIp,
-            powerThreshold: this.state.powerThreshold,
-            measureInterval: this.state.measureInterval,
-            enableStatusLED: this.state.enableStatusLED,
 
-        }));
+        let payload={};
+        this.fields.map((field) => {
+            payload[field]= this.state[field];
+            return;
+        });
 
-        console.log(data);
+        data.append("data", JSON.stringify(payload));
 
         this.setState({ error: null, status: null, dataReceived: true, dataSaving: true });
         fetch(`${this.props.API}/api/config/set`,
@@ -119,17 +118,46 @@ export class ConfigPage extends React.Component {
         this.fetchData();
     }
 
+    onNumericChange(event){
+        let { value, min } = event.target;
+        let name=event.target.name;
+
+        let newState={};
+        newState[name]=Number(value);        
+        this.setState(newState);
+    }
+
+    onNumericInput(event){
+        let { value, min, max } = event.target;
+        let name=event.target.name;
+
+        //Allow backspace
+        if([8, 37, 39].indexOf(event.keyCode)>=0){
+            return;
+        }else if((!(event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105))){
+            event.preventDefault();
+        }
+
+        let numeticValue = Number(value);
+        let numericMax=Number(max);
+        console.log(numeticValue, numericMax,  numeticValue>numericMax);
+
+        if(numeticValue>numericMax){
+            event.preventDefault();
+        }
+    }
+
     render() {
 
         let saveEnabled = false;
         if (this.state.dataReceived) {
-            saveEnabled = !(this.state.useNTP === this.state.useNTP_initial &&
-                this.state.operationMode === this.state.operationMode_initial &&
-                this.state.serverIp === this.state.serverIp_initial &&
-                this.state.powerThreshold === this.state.powerThreshold_initial &&
-                this.state.measureInterval === this.state.measureInterval_initial &&
-                this.state.enableStatusLED === this.state.enableStatusLED_initial
-            );
+
+            this.fields.map((field)=>{
+                if(this.state[field] !== this.state[`${field}_initial`]){
+                    saveEnabled=true;
+                    return;
+                }
+            })
         }
 
         return (
@@ -171,26 +199,42 @@ export class ConfigPage extends React.Component {
                         </select>
                     </p>
                     {this.state.operationMode === 1 ?
-                        <><p>
-                            <label htmlFor={this.controls.serverIp.name}>
-                                <b>{this.controls.serverIp.label}</b>:
-                            </label>
-                            <MaskedInput id={this.controls.serverIp.name} name={this.controls.serverIp.name} className="input_small"
-                                onChange={(e) => { this.setState({ serverIp: e.target.value.trim() }) }} value={this.state.serverIp} {...ipProps} />
-                        </p>
+                        <>
                             <p>
-                                <label htmlFor={this.controls.powerThreshold.name}>
-                                    <b>{this.controls.powerThreshold.label}</b>:
+                                <label htmlFor={this.controls.serverIp.name}>
+                                    <b>{this.controls.serverIp.label}</b>:
                                 </label>
-                                <input id={this.controls.powerThreshold.name} name={this.controls.powerThreshold.name} type="text" className="input_small"
-                                    onChange={(e) => { this.setState({ powerThreshold: Number(e.target.value) }) }} value={this.state.powerThreshold} />
+                                <MaskedInput id={this.controls.serverIp.name} name={this.controls.serverIp.name} type="text" className="input_small"
+                                    onChange={(e) => { this.setState({ serverIp: e.target.value.trim() }) }} value={this.state.serverIp} {...ipProps} />
+                            </p>
+                            <p>
+                                <label htmlFor={this.controls.serverPort.name}>
+                                    <b>{this.controls.serverPort.label}</b>:
+                                </label>
+                                <input id={this.controls.serverPort.name} name={this.controls.serverPort.name} type="text" className="input_small"
+                                    onChange={(e) => { this.setState({ serverPort: Number(e.target.value) }) }} value={this.state.serverPort} />
+                            </p>
+                            <p>
+                                <label htmlFor={this.controls.powerThresholdHigh.name}>
+                                    <b>{this.controls.powerThresholdHigh.label}</b>:
+                                </label>
+                                <input id={this.controls.powerThresholdHigh.name} name={this.controls.powerThresholdHigh.name} type="text" className="input_small"
+                                    onChange={(e) => { this.setState({ powerThresholdHigh: Number(e.target.value) }) }} value={this.state.powerThresholdHigh} />
+                            </p>
+
+                            <p>
+                                <label htmlFor={this.controls.powerThresholdLow.name}>
+                                    <b>{this.controls.powerThresholdLow.label}</b>:
+                                </label>
+                                <input id={this.controls.powerThresholdLow.name} name={this.controls.powerThresholdLow.name} type="text" className="input_small"
+                                    onChange={(e) => { this.setState({ powerThresholdLow: Number(e.target.value) }) }} value={this.state.powerThresholdLow} />
                             </p>
                             <p>
                                 <label htmlFor={this.controls.measureInterval.name}>
                                     <b>{this.controls.measureInterval.label}</b>:
                                 </label>
-                                <input id={this.controls.measureInterval.name} name={this.controls.measureInterval.name} type="text" className="input_small"
-                                    onChange={(e) => { this.setState({ measureInterval: Number(e.target.value) }) }} value={this.state.measureInterval} />
+                                <input id={this.controls.measureInterval.name} name={this.controls.measureInterval.name} type="text" className="input_small" min="5" max="600"
+                                    onChange={this.onNumericChange} onKeyDown={this.onNumericInput} value={this.state.measureInterval} />
                             </p>
                         </> : null}
 

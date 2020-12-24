@@ -8,6 +8,8 @@ const configData defaults PROGMEM =
 	0,
 	2,
 	"0.0.0.0",
+	502,
+	0,
 	0,
 	300,//Seconds 
 	1// Enable LED

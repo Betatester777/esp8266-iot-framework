@@ -1,10 +1,10 @@
-#ifndef STATES_H
-#define STATES_H
+#ifndef __STATES_H__
+#define __STATES_H__
 
-#include "Fsm.h"
 #include <Ticker.h>
-#include <configManager.h>
-#include "sma_modbus.h"
+#include <StateMachine.h>
+#include <ConfigManager.h>
+#include <SMAModbusSlave.h>
 
 #define FIRMWARE_VERSION = "0.0.1"
 
@@ -15,10 +15,10 @@
 #define KeyBounce 50              //Millisekunden zwischen 2xtasten
 #define KeyLongPressDuration 1500 //Millisekunden für langen Tastendruck bei Sonoff Touch als Sender
 
-#define MANUAL_OFF "stateOperationMode_ManualOff"
-#define MANUAL_ON "stateOperationMode_ManualOn"
-#define POWER_OFF "stateOperationMode_PowerOff"
-#define POWER_ON "stateOperationMode_PowerOn"
+#define MANUAL_OFF "OperationMode_ManualOff"
+#define MANUAL_ON "OperationMode_ManualOn"
+#define POWER_OFF "OperationMode_PowerOff"
+#define POWER_ON "OperationMode_PowerOn"
 
 #define TRIGGER_TOGGLE_ON_OFF 0
 #define TRIGGER_CHANGE_OPERATION_MODE 1
@@ -46,7 +46,7 @@ void onTransition_OperationMode_Change();
 
 void readMeasuredPower();
 
-void initFsm();
+void fsm_setup();
 
 extern State * stateOperationMode_ManualOff;
 extern State * stateOperationMode_ManualOn;
@@ -55,5 +55,6 @@ extern State * stateOperationMode_PowerOn;
 extern Fsm * fsmOperationMode;
 extern uint32_t measuredPower;
 extern bool enableMeasurePower;
+extern SMAModbusSlave *inverterSlave;
 
 #endif

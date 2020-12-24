@@ -33,8 +33,22 @@
         "placeholder":"xxx.xxx.xxx.xxx"
     },
     {
-        "name": "powerThreshold",
-        "label": "Power threshold",
+        "name": "serverPort",
+        "label": "Port",
+        "type": "uint16_t",
+        "control_type":"port",
+        "value": "502"
+    },
+    {
+        "name": "powerThresholdHigh",
+        "label": "Power threshold HIGH",
+        "type": "uint32-t",
+        "control_type":"text_input",
+        "value": "0"
+    },
+    {
+        "name": "powerThresholdLow",
+        "label": "Power threshold LOW",
         "type": "uint32-t",
         "control_type":"text_input",
         "value": "0"

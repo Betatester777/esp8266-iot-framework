@@ -1,8 +1,8 @@
-#ifndef CONFIGMGR_H
-#define CONFIGMGR_H
+#ifndef __CONFIGMGR_H__
+#define __CONFIGMGR_H__
 
 #include "IPAddress.h"
-#include "generated/config.h"
+#include <generated/config.h>
 
 //data that needs to be persisted for other parts of the framework
 

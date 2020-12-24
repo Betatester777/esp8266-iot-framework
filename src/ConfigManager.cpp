@@ -1,7 +1,6 @@
 #include <EEPROM.h>
 #include <Arduino.h>
-
-#include "configManager.h"
+#include <ConfigManager.h>
 
 //class functions
 bool config::begin(int numBytes)

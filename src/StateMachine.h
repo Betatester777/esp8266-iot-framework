@@ -1,28 +1,11 @@
-// This file is part of arduino-fsm.
-//
-// arduino-fsm is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option)
-// any later version.
-//
-// arduino-fsm is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with arduino-fsm.  If not, see <http://www.gnu.org/licenses/>.
-
-#ifndef FSM_H
-#define FSM_H
-
+#ifndef __STATE_MACHINE_H__
+#define __STATE_MACHINE_H__
 
 #if defined(ARDUINO) && ARDUINO >= 100
   #include <Arduino.h>
 #else
   #include <WProgram.h>
 #endif
-
 
 struct State
 {
@@ -32,7 +15,6 @@ struct State
   void (*on_state)();
   void (*on_exit)();
 };
-
 
 class Fsm
 {
@@ -49,7 +31,7 @@ public:
   void check_timed_transitions();
 
   void trigger(int event);
-  void run_machine();
+  void loop();
 
   String get_current_state_key();
 
@@ -62,7 +44,7 @@ private:
     void (*on_transition)();
 
   };
-  
+
   struct TimedTransition
   {
     Transition transition;
@@ -84,6 +66,5 @@ private:
   int m_num_timed_transitions;
   bool m_initialized;
 };
-
 
 #endif

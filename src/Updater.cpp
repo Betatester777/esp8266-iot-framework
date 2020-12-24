@@ -1,5 +1,4 @@
-#include "updater.h"
-
+#include <Updater.h>
 #include "LittleFS.h"
 
 void LittleFSUpdater::requestStart(String filenameIn)
@@ -11,7 +10,7 @@ void LittleFSUpdater::requestStart(String filenameIn)
 
 void LittleFSUpdater::loop()
 {
-    if (requestFlag==true)
+    if (requestFlag == true)
     {
         requestFlag = false;
         flash(filename);
@@ -24,7 +23,7 @@ uint8_t LittleFSUpdater::getStatus()
 }
 
 void LittleFSUpdater::flash(String filename)
-{    
+{
     bool answer = 0;
     File file = LittleFS.open(filename, "r");
 
@@ -58,10 +57,8 @@ void LittleFSUpdater::flash(String filename)
                 Serial.println(PSTR("Error Occurred: ") + String(Update.getError()));
             }
         }
-
         file.close();
     }
-    
     status = answer;
 }
 

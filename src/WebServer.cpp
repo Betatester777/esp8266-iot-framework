@@ -1,4 +1,4 @@
-#include "webServer.h"
+#include <WebServer.h>
 
 String config2json(){
     String JSON;
@@ -7,7 +7,9 @@ String config2json(){
     jsonBuffer["useNTP"] = configManager.data.useNTP;
     jsonBuffer["operationMode"] = configManager.data.operationMode;
     jsonBuffer["serverIp"] = configManager.data.serverIp;
-    jsonBuffer["powerThreshold"] = configManager.data.powerThreshold;
+    jsonBuffer["serverPort"] = configManager.data.serverPort;
+    jsonBuffer["powerThresholdHigh"] = configManager.data.powerThresholdHigh;
+    jsonBuffer["powerThresholdLow"] = configManager.data.powerThresholdLow;
     jsonBuffer["measureInterval"] = configManager.data.measureInterval;
     jsonBuffer["enableStatusLED"] = configManager.data.enableStatusLED;
     serializeJson(jsonBuffer, JSON);
@@ -26,13 +28,14 @@ void json2config(String configData){
     configManager.data.useNTP= obj[String("useNTP")].as<uint8_t>();
     configManager.data.operationMode= obj[String("operationMode")].as<uint8_t>();
     strcpy(configManager.data.serverIp, obj[String("serverIp")].as<String>().c_str());
-    configManager.data.powerThreshold= obj[String("powerThreshold")].as<uint32_t>();
+    configManager.data.serverPort= obj[String("serverPort")].as<uint16_t>();
+    configManager.data.powerThresholdHigh= obj[String("powerThresholdHigh")].as<uint32_t>();
+    configManager.data.powerThresholdLow= obj[String("powerThresholdLow")].as<uint32_t>();
     configManager.data.measureInterval= obj[String("measureInterval")].as<uint32_t>();
     configManager.data.enableStatusLED= obj[String("enableStatusLED")].as<uint8_t>();
-
 }
 
-void webServer::begin()
+void WebServer::begin()
 {
     //to enable testing and debugging of the interface
     DefaultHeaders::Instance().addHeader(PSTR("Access-Control-Allow-Origin"), PSTR("*"));
@@ -51,7 +54,7 @@ void webServer::begin()
     bindAll();
 }
 
-void webServer::bindAll()
+void WebServer::bindAll()
 {
     //Restart the ESP
     server.on(PSTR("/api/restart"), HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -161,7 +164,7 @@ void webServer::bindAll()
 }
 
 // Callback for the html
-void webServer::serveProgmem(AsyncWebServerRequest *request)
+void WebServer::serveProgmem(AsyncWebServerRequest *request)
 {
         // Dump the byte array in PROGMEM with a 200 HTTP code (OK)
         AsyncWebServerResponse *response = request->beginResponse_P(200, PSTR("text/html"), html, html_len);
@@ -172,7 +175,7 @@ void webServer::serveProgmem(AsyncWebServerRequest *request)
         request->send(response);    
 }
 
-void webServer::handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+void WebServer::handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
         static File fsUploadFile;
 
@@ -205,4 +208,4 @@ void webServer::handleFileUpload(AsyncWebServerRequest *request, String filename
         }
 }
 
-webServer GUI;
+WebServer GUI;

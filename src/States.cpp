@@ -1,4 +1,4 @@
-#include "states.h"
+#include <States.h>
 
 int blinkCount = 0;
 Ticker tickerReadMesuredPower;
@@ -11,8 +11,6 @@ State *stateOperationMode_ManualOn;
 State *stateOperationMode_PowerOff;
 State *stateOperationMode_PowerOn;
 Fsm *fsmOperationMode;
-
-SMAModbusSlave *inverterSlave;
 
 void statusLEDBlink()
 {
@@ -49,7 +47,6 @@ void onEnter_OperationMode_ManualOff()
     configManager.data.operationMode = OPERATION_MODE_MANUAL;
     configManager.save();
   }
-  inverterSlave->setRequestInterval(0);
   digitalWrite(RelayPin, LOW);
 }
 
@@ -61,7 +58,6 @@ void onEnter_OperationMode_ManualOn()
     configManager.data.operationMode = OPERATION_MODE_MANUAL;
     configManager.save();
   }
-  inverterSlave->setRequestInterval(0);
   digitalWrite(RelayPin, HIGH);
 }
 
@@ -73,7 +69,6 @@ void onEnter_OperationMode_PowerOff()
     configManager.data.operationMode = OPERATION_MODE_POWER;
     configManager.save();
   }
-  inverterSlave->setRequestInterval(configManager.data.measureInterval);
   digitalWrite(RelayPin, LOW);
 }
 
@@ -85,7 +80,6 @@ void onEnter_OperationMode_PowerOn()
     configManager.data.operationMode = OPERATION_MODE_POWER;
     configManager.save();
   }
-  inverterSlave->setRequestInterval(configManager.data.measureInterval);
   digitalWrite(RelayPin, HIGH);
 }
 
@@ -103,27 +97,9 @@ void onTransition_OperationMode_Change()
   indicateOperationModeChange();
 }
 
-void readMeasuredPower(uint32_t watts)
-{
-  measuredPower = watts;
-  Serial.println("Power measuered: " + String(measuredPower));
-
-  if (measuredPower >= configManager.data.powerThreshold)
-  {
-    fsmOperationMode->trigger(TRIGGER_POWER_HIGH);
-    Serial.println("Power measuere: HIGH");
-  }
-  else
-  {
-    fsmOperationMode->trigger(TRIGGER_POWER_LOW);
-    Serial.println("Power measuere: LOW");
-  }
-}
-
-void initFsm()
+void fsm_setup()
 {
   pinMode(LEDPinSwitch, OUTPUT);
-  pinMode(RelayPin, OUTPUT);
   pinMode(RelayPin, OUTPUT);
   pinMode(ButtonPin, INPUT_PULLUP);
 
@@ -160,8 +136,6 @@ void initFsm()
 
   fsmOperationMode->add_transition(stateOperationMode_PowerOn, stateOperationMode_ManualOff, TRIGGER_CHANGE_OPERATION_MODE, &onTransition_OperationMode_Change);
   fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_PowerOff, TRIGGER_CHANGE_OPERATION_MODE, &onTransition_OperationMode_Change);
-
-  inverterSlave = new SMAModbusSlave(String(configManager.data.serverIp), 0, readMeasuredPower);
 
   Serial.println("Setup FSM END");
 }
