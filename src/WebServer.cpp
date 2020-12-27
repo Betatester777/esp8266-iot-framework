@@ -1,12 +1,13 @@
 #include <WebServer.h>
 
-String config2json(){
+String WebServer::config2json(){
     String JSON;
     StaticJsonDocument<1024> jsonBuffer;
 
     jsonBuffer["useNTP"] = configManager.data.useNTP;
     jsonBuffer["operationMode"] = configManager.data.operationMode;
-    jsonBuffer["serverIp"] = configManager.data.serverIp;
+    jsonBuffer["serverProductId"] = configManager.data.serverProductId;
+    jsonBuffer["serverIp"] = String(configManager.data.serverIp);
     jsonBuffer["serverPort"] = configManager.data.serverPort;
     jsonBuffer["powerThresholdHigh"] = configManager.data.powerThresholdHigh;
     jsonBuffer["powerThresholdLow"] = configManager.data.powerThresholdLow;
@@ -17,7 +18,7 @@ String config2json(){
     return JSON;
 }
 
-void json2config(String configData){
+void WebServer::json2config(String configData){
     Serial.println(configData);
 
     DynamicJsonDocument doc(1024);
@@ -27,12 +28,25 @@ void json2config(String configData){
 
     configManager.data.useNTP= obj[String("useNTP")].as<uint8_t>();
     configManager.data.operationMode= obj[String("operationMode")].as<uint8_t>();
+    configManager.data.serverProductId= obj[String("serverProductId")].as<uint16_t>();
     strcpy(configManager.data.serverIp, obj[String("serverIp")].as<String>().c_str());
     configManager.data.serverPort= obj[String("serverPort")].as<uint16_t>();
     configManager.data.powerThresholdHigh= obj[String("powerThresholdHigh")].as<uint32_t>();
     configManager.data.powerThresholdLow= obj[String("powerThresholdLow")].as<uint32_t>();
     configManager.data.measureInterval= obj[String("measureInterval")].as<uint32_t>();
     configManager.data.enableStatusLED= obj[String("enableStatusLED")].as<uint8_t>();
+}
+
+String WebServer::status2json(){
+    String JSON;
+    StaticJsonDocument<1024> jsonBuffer;
+
+    jsonBuffer["operationMode"] = configManager.data.operationMode;
+    jsonBuffer["measuredPower"] = measuredPower;
+    jsonBuffer["outputStatus"] = outputStatus;
+    serializeJson(jsonBuffer, JSON);
+    Serial.println(JSON);
+    return JSON;
 }
 
 void WebServer::begin()
@@ -138,13 +152,13 @@ void WebServer::bindAll()
     });
 
     //send binary configuration data
-    server.on(PSTR("/api/config/get"), HTTP_GET, [](AsyncWebServerRequest *request) {
+    server.on(PSTR("/api/config/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, PSTR("'application/json'"), config2json());
     });
 
     //receive binary configuration data from body
     server.on(PSTR("/api/config/set"), HTTP_POST,
-        [](AsyncWebServerRequest *request) {
+        [this](AsyncWebServerRequest *request) {
         uint8_t lastOperationMode=configManager.data.operationMode;
         json2config(request->arg("data"));
         configManager.save();
@@ -154,11 +168,48 @@ void WebServer::bindAll()
         }
         Serial.println("save config success");      
 
-        config2json();
-
-
-        
+        config2json();        
         request->send(200, PSTR("'text/html'"), "OK");
+        }
+    );
+
+    //send binary configuration data
+    server.on(PSTR("/api/status/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, PSTR("'application/json'"), status2json());
+    });
+
+    server.on(PSTR("/api/status/operation_mode/power"), HTTP_GET,
+        [this](AsyncWebServerRequest *request) {
+            configManager.data.operationMode=OPERATION_MODE_POWER;
+            configManager.save();
+            fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_POWER);
+            Serial.println("change operation mode: POWER"); 
+            
+            request->send(200, PSTR("'text/html'"), "OK");
+        }
+    );
+
+    server.on(PSTR("/api/status/operation_mode/manual"), HTTP_GET,
+        [this](AsyncWebServerRequest *request) {
+            configManager.data.operationMode=OPERATION_MODE_MANUAL;
+            configManager.save();
+            fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_MANUAL);
+            Serial.println("change operation mode: MANUAL");             
+            request->send(200, PSTR("'text/html'"), "OK");
+        }
+    );
+
+    server.on(PSTR("/api/status/output/on"), HTTP_GET,
+        [this](AsyncWebServerRequest *request) {
+            fsmOperationMode->trigger(TRIGGER_ON);            
+            request->send(200, PSTR("'text/html'"), "OK");
+        }
+    );
+
+    server.on(PSTR("/api/status/output/off"), HTTP_GET,
+        [this](AsyncWebServerRequest *request) {
+            fsmOperationMode->trigger(TRIGGER_OFF);            
+            request->send(200, PSTR("'text/html'"), "OK");
         }
     );
 }

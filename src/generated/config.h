@@ -5,6 +5,7 @@ struct configData
 {
 	uint8_t useNTP;
 	uint8_t operationMode;
+	uint16_t serverProductId;
 	char serverIp[15];
 	uint16_t serverPort; 
 	uint32_t powerThresholdHigh;

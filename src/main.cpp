@@ -10,9 +10,8 @@
 #include <PushButtonHandler.h>
 #include <SMA/SMAModbusSlave.h>
 
-
-int period = 5000;
-unsigned long time_now = 0;
+unsigned long modbusRequestDelay;
+unsigned long modbusRequestTimer;
 
 void onPowerChanged(uint32_t oldValue, uint32_t newValue)
 {
@@ -46,6 +45,7 @@ SMAModbusSlave *smaModbusSlave;
 void setup()
 {
   Serial.begin(115200);
+  modbusRequestTimer=0;
   LittleFS.begin();
   GUI.begin();
   configManager.begin();
@@ -59,6 +59,7 @@ void setup()
                                       30775,
                                       4,
                                       &onPowerChanged);
+  
 }
 
 void loop()
@@ -68,16 +69,20 @@ void loop()
   updater.loop();
   pushButtonHandler.loop();
   fsmOperationMode->loop();
-
-  period = configManager.data.measureInterval * 1000;
-  if (millis() >= (time_now + period))
+  modbusRequestDelay = configManager.data.measureInterval * 1000;
+  if (millis() >= (modbusRequestTimer + modbusRequestDelay))
   {
-    time_now += period;
+    modbusRequestTimer += modbusRequestDelay;
     String stateKey=fsmOperationMode->get_current_state_key();
     if(stateKey==POWER_OFF || stateKey==POWER_ON){
+      if(configManager.data.enableStatusLED){
+        indicatePowerMeasureRequest();
+      }
       smaModbusSlave->_readRegister();
     }
   }
+
+  outputStatus=digitalRead(RelayPin);
 
   delay(1);
 }

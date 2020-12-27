@@ -1,0 +1,33 @@
+[
+    {
+        "name": "outputStatus",
+        "label": "Relay status",
+        "type": "uint8_t",
+        "ui_control":"select",
+        "options":[
+            {"text": "OFF", "value": 0, "api": "/status/output/off"},
+            {"text": "ON", "value": 1, "api": "/status/output/on"}
+        ]
+    },
+    {
+        "name": "operationMode",
+        "label": "Operation mode",
+        "type": "uint8_t",
+        "ui_control":"select",
+        "options":[
+            {"text": "MANUAL", "value": 0, "api": "/status/operation_mode/manual"},
+            {"text": "POWER", "value": 1, "api": "/status/operation_mode/power"}
+        ]
+    },
+    {
+        "display_filter_value":1,
+        "display_filter": "operationMode",
+        "name": "measuredPower",
+        "label": "Measured power",
+        "type": "uint32_t",
+        "ui_control":"numeric_input",
+        "value": "",
+        "read_only": true
+
+    }
+]

@@ -7,6 +7,7 @@ const configData defaults PROGMEM =
 {
 	0,
 	2,
+	9225,
 	"0.0.0.0",
 	502,
 	0,

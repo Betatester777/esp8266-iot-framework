@@ -4,7 +4,8 @@ int blinkCount = 0;
 Ticker tickerReadMesuredPower;
 Ticker tickerBlink;
 uint32_t measuredPower = 0;
-bool enableMeasurePower;
+bool enableMeasurePower = false;
+uint8_t outputStatus = OUTPUT_OFF;
 
 State *stateOperationMode_ManualOff;
 State *stateOperationMode_ManualOn;
@@ -92,6 +93,15 @@ void indicateOperationModeChange()
   tickerBlink.attach_ms(200, statusLEDBlink);
 }
 
+void indicatePowerMeasureRequest()
+{
+  Serial.println("power measure request");
+  digitalWrite(LEDPinSwitch, HIGH);
+  blinkCount = 2;
+  tickerBlink.detach();
+  tickerBlink.attach_ms(200, statusLEDBlink);
+}
+
 void onTransition_OperationMode_Change()
 {
   indicateOperationModeChange();
@@ -125,6 +135,8 @@ void fsm_setup()
 
   fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_TOGGLE_ON_OFF, NULL);
   fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_TOGGLE_ON_OFF, NULL);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_OFF, NULL);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_ON, NULL);
 
   fsmOperationMode->add_transition(stateOperationMode_PowerOff, stateOperationMode_PowerOn, TRIGGER_POWER_HIGH, NULL);
   fsmOperationMode->add_transition(stateOperationMode_PowerOn, stateOperationMode_PowerOff, TRIGGER_POWER_LOW, NULL);
@@ -134,6 +146,12 @@ void fsm_setup()
 
   fsmOperationMode->add_transition(stateOperationMode_PowerOn, stateOperationMode_ManualOff, TRIGGER_CHANGE_OPERATION_MODE, &onTransition_OperationMode_Change);
   fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_PowerOff, TRIGGER_CHANGE_OPERATION_MODE, &onTransition_OperationMode_Change);
+
+  fsmOperationMode->add_transition(stateOperationMode_PowerOn, stateOperationMode_ManualOff, TRIGGER_OPERATION_MODE_MANUAL, &onTransition_OperationMode_Change);
+  fsmOperationMode->add_transition(stateOperationMode_PowerOff, stateOperationMode_ManualOff, TRIGGER_OPERATION_MODE_MANUAL, &onTransition_OperationMode_Change);
+
+  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_PowerOff, TRIGGER_OPERATION_MODE_POWER, &onTransition_OperationMode_Change);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_PowerOff, TRIGGER_OPERATION_MODE_POWER, &onTransition_OperationMode_Change);
 
   Serial.println("Setup FSM END");
 }

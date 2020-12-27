@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import {BrowserRouter, Switch, Route, NavLink} from "react-router-dom";
 import { Box } from "react-feather";
-
-import Config from "./configuration.json";
-import {GlobalStyle, Menu, Header, Page, Hamburger} from "./comp/UiComponents";
-import { WifiPage } from "./comp/WifiPage";
-import { ConfigPage } from "./comp/ConfigPage";
-import { FirmwarePage } from "./comp/FirmwarePage";
+import {Menu, Header, Title, Hamburger} from "./components/UiComponents";
+import { WifiPage } from "./components/WifiPage";
+import { ConfigPage } from "./components/ConfigPage";
+import { StatusPage } from "./components/StatusPage";
+import { FirmwarePage } from "./components/FirmwarePage";
+import "./styles.less";
 
 let url = "http://192.168.1.54";
 
@@ -39,25 +39,33 @@ function Root() {
         setSocket(ws);       
     }, []);
 
-    return <div><GlobalStyle />
+    let menuClass=menu ? "menu" : "menu menuHidden";
+    console.log(menu)
+
+    return <div>
 
         <BrowserRouter>
-
             <Header>
-                <h1><Box style={{verticalAlign:"-0.1em"}} /> {productName}</h1>
+                <Title>
+                    <Box style={{verticalAlign:"-0.1em", width: "1.4em", height: "1.4em", margin: "0em 0.2em 0em 0.4em"}} />{productName}
+                </Title>
 
                 <Hamburger onClick={() => setMenu(!menu)} />
-                <Menu className={menu ? "" : "menuHidden"}>
+                <Menu className={menuClass}>
                     <li><NavLink onClick={() => setMenu(false)} exact to="/">WiFi Settings</NavLink></li>
                     <li><NavLink onClick={() => setMenu(false)} exact to="/config">Configuration</NavLink></li>
+                    <li><NavLink onClick={() => setMenu(false)} exact to="/status">Status</NavLink></li>
                     <li><NavLink onClick={() => setMenu(false)} exact to="/update">Update</NavLink></li>
                 </Menu>
             </Header>
         
-            <Page>
+            <div className="page">
                 <Switch>
                     <Route exact path="/config">
                         <ConfigPage API={url} />
+                    </Route>
+                    <Route exact path="/status">
+                        <StatusPage API={url} />
                     </Route>
                     <Route exact path="/update">
                         <FirmwarePage API={url} />
@@ -67,13 +75,11 @@ function Root() {
                     </Route>
 
                 </Switch>
-            </Page>
+            </div>
 
         </BrowserRouter>
     </div>;
-
 }
-
 
 
 ReactDOM.render(<Root />, document.getElementById("root"));

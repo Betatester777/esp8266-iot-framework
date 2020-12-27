@@ -21,6 +21,10 @@ private:
     static void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
     static void serveProgmem(AsyncWebServerRequest *request);
     void bindAll();
+    uint8_t desiredOutputStatus;
+    String config2json();
+    void json2config(String configData);
+    String status2json();
 public:
     AsyncWebSocket ws = AsyncWebSocket("/ws");
     void begin();
