@@ -34,10 +34,21 @@
         ]
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
+        "name": "serverAddressType",
+        "label": "Inverter address type",
+        "type": "uint8_t",
+        "ui_control":"select",
+        "value": 0,       
+        "options":[
+            {"text": "IP",	"value": 0},
+            {"text": "DNS",	"value": 1}
+        ]
+    },
+    {
+        "display_filter": "state.operationMode==1 && state.serverAddressType == 0",
         "name": "serverIp",
-        "label": "IP address",
+        "label": "IP address of inverter",
         "type": "char",
         "ui_control":"ip_address",
         "length": 15,
@@ -45,10 +56,19 @@
         "placeholder":"xxx.xxx.xxx.xxx"
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1 && state.serverAddressType == 1",
+        "name": "serverDNS",
+        "label": "DNS of inverter",
+        "type": "char",
+        "ui_control":"dns",
+        "length": 255,
+        "value": "",
+        "placeholder":"myDNS"
+    },
+    {
+        "display_filter": "state.operationMode==1",
         "name": "serverProductId",
-        "label": "Modell",
+        "label": "Device type",
         "type": "uint16_t",
         "ui_control":"group_select",
         "optgroups": [
@@ -132,8 +152,7 @@
         ]
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
         "name": "serverPort",
         "label": "Port",
         "type": "uint16_t",
@@ -143,31 +162,28 @@
         "value": "502"
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
         "name": "powerThresholdHigh",
         "label": "Power threshold HIGH",
         "type": "uint32_t",
         "ui_control":"numeric_input",
-        "value": "1",
-        "min": "0",
+        "value": "20",
+        "min": "20",
         "max": "1000000"
 
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
         "name": "powerThresholdLow",
         "label": "Power threshold LOW",
         "type": "uint32_t",
         "ui_control":"numeric_input",
-        "value": "1",
-        "min": "0",
-        "max": "1000000"
+        "value": "20",
+        "min": "20",
+        "max": "20000"
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
         "name": "measureInterval",
         "label": "Value request interval (sec.)",
         "type": "uint8_t",

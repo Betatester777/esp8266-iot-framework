@@ -18,7 +18,9 @@ struct configData
 	uint8_t useNTP;
 	uint8_t operationMode;
 	uint16_t serverProductId;
+	uint8_t serverAddressType;
 	char serverIp[15];
+	char serverDNS[255];
 	uint16_t serverPort; 
 	uint32_t powerThresholdHigh;
 	uint32_t powerThresholdLow;

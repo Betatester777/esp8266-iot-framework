@@ -9,9 +9,10 @@
 class SMAModbusSlave
 {
 public:
-  SMAModbusSlave(String serverIp, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue));
+  SMAModbusSlave(String serverHost, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue));
   ~SMAModbusSlave();
   void setRequestInterval(uint32_t _requestInterval);
+  void setHostAndPort(String serverHost, uint16_t serverPort);
   int getValue();
   bool getIsEnabled();
   static bool doConnect;
@@ -25,7 +26,7 @@ private:
   uint32_t _protocolId;
   uint16_t _functionCode;
   uint16_t _unitId;
-  String _serverIp;
+  String _serverHost;
   uint16_t _serverPort;
   uint32_t _requestInterval;
   uint16_t _startAddress;

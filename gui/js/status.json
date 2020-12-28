@@ -20,13 +20,12 @@
         ]
     },
     {
-        "display_filter_value":1,
-        "display_filter": "operationMode",
+        "display_filter": "state.operationMode==1",
         "name": "measuredPower",
         "label": "Measured power",
         "type": "uint32_t",
         "ui_control":"numeric_input",
-        "value": "",
+        "value": "unknown",
         "read_only": true
 
     }

@@ -1,13 +1,13 @@
 #include <SMA/SMAModbusSlave.h>
 bool SMAModbusSlave::doConnect = false;
 
-SMAModbusSlave::SMAModbusSlave(String serverIp, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue))
+SMAModbusSlave::SMAModbusSlave(String serverHost, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue))
 {
   _transactionId = 1;
   _protocolId = 0;
   _functionCode = 3;
   _unitId = 3;
-  _serverIp = serverIp;
+  _serverHost = serverHost;
   _serverPort = serverPort;
   _requestInterval = requestInterval;
   _startAddress = startAddress;
@@ -15,6 +15,11 @@ SMAModbusSlave::SMAModbusSlave(String serverIp, uint16_t serverPort, uint32_t re
   _onValueChanged = onValueChanged;
   _requestPayload = new SMARequest(_transactionId, _protocolId, 6, _unitId, _functionCode, _startAddress, _quantityOfRegisters);
   setRequestInterval(_requestInterval);
+}
+
+void SMAModbusSlave::setHostAndPort(String serverHost, uint16_t serverPort){
+  _serverHost = serverHost;
+  _serverPort = serverPort;
 }
 
 void SMAModbusSlave::setRequestInterval(uint32_t requestInterval)
@@ -32,14 +37,14 @@ int SMAModbusSlave::_readRegister()
   WiFiClient client;
   int32_t newValue = 0;
   //client.setTimeout(10000);
-  int retval = client.connect(_serverIp, _serverPort);
+  int retval = client.connect(_serverHost, _serverPort);
   if (retval != 1)
   {
     Serial.println(F("Connection failed."));
     return -1;
   }
 
-  Serial.println("Connected to host: " + _serverIp + ":" + String(_serverPort));
+  Serial.println("Connected to host: " + _serverHost + ":" + String(_serverPort));
 
   char requestBytes[12];
   _requestPayload->getBytes(requestBytes, sizeof(requestBytes));
@@ -73,6 +78,8 @@ int SMAModbusSlave::_readRegister()
   SMAResponse *response = new SMAResponse(resultBuffer, sizeof(resultBuffer));
   Serial.println("received: \n" + response->toString());
   newValue = response->getS32Value();
+  Serial.println(newValue);
+
   if (newValue != (int32_t)_registerValue)
   {
     this->_onValueChanged(this->_registerValue, newValue);

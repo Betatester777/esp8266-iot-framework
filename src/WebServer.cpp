@@ -7,7 +7,9 @@ String WebServer::config2json(){
     jsonBuffer["useNTP"] = configManager.data.useNTP;
     jsonBuffer["operationMode"] = configManager.data.operationMode;
     jsonBuffer["serverProductId"] = configManager.data.serverProductId;
+    jsonBuffer["serverAddressType"] = configManager.data.serverAddressType;
     jsonBuffer["serverIp"] = String(configManager.data.serverIp);
+    jsonBuffer["serverDNS"] = String(configManager.data.serverDNS);
     jsonBuffer["serverPort"] = configManager.data.serverPort;
     jsonBuffer["powerThresholdHigh"] = configManager.data.powerThresholdHigh;
     jsonBuffer["powerThresholdLow"] = configManager.data.powerThresholdLow;
@@ -29,7 +31,9 @@ void WebServer::json2config(String configData){
     configManager.data.useNTP= obj[String("useNTP")].as<uint8_t>();
     configManager.data.operationMode= obj[String("operationMode")].as<uint8_t>();
     configManager.data.serverProductId= obj[String("serverProductId")].as<uint16_t>();
+    configManager.data.serverAddressType= obj[String("serverAddressType")].as<uint8_t>();
     strcpy(configManager.data.serverIp, obj[String("serverIp")].as<String>().c_str());
+    strcpy(configManager.data.serverDNS, obj[String("serverDNS")].as<String>().c_str());
     configManager.data.serverPort= obj[String("serverPort")].as<uint16_t>();
     configManager.data.powerThresholdHigh= obj[String("powerThresholdHigh")].as<uint32_t>();
     configManager.data.powerThresholdLow= obj[String("powerThresholdLow")].as<uint32_t>();

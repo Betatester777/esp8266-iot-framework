@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Config from "../configuration.json";
-import { Form, Button, Spinner, Status, NumericInput, IPv4, Select, OptGroupSelect } from "./UiComponents";
+import { Form, Button, Spinner, Status, NumericInput, IPv4, DNSName, Select, OptGroupSelect } from "./UiComponents";
 import StateMachine from 'javascript-state-machine';
 
 const StatusType = Object.freeze({
@@ -9,6 +9,9 @@ const StatusType = Object.freeze({
     error: "error",
     success: "success"
 });
+
+const ValidHostnameRegex = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$";
+//var regexObj = new RegExp(ValidHostnameRegex);
 
 export class ConfigPage extends React.Component {
 
@@ -25,7 +28,9 @@ export class ConfigPage extends React.Component {
             "useNTP",
             "operationMode",
             "serverProductId",
+            "serverAddressType",
             "serverIp",
+            "serverDNS",
             "serverPort",
             "powerThresholdHigh",
             "powerThresholdLow",
@@ -191,7 +196,9 @@ export class ConfigPage extends React.Component {
                     <Select control={this.controls.enableStatusLED} state={this.state} setState={this.onChangeValue} />
                     <Select control={this.controls.operationMode} state={this.state} setState={this.onChangeValue} />
                     <OptGroupSelect control={this.controls.serverProductId} state={this.state} setState={this.onChangeValue} />
+                    <Select control={this.controls.serverAddressType} state={this.state} setState={this.onChangeValue} />
                     <IPv4 control={this.controls.serverIp} state={this.state} setState={this.onChangeValue} />
+                    <DNSName control={this.controls.serverDNS} state={this.state} setState={this.onChangeValue} />
                     <NumericInput control={this.controls.serverPort} state={this.state} setState={this.onChangeValue} />
                     <NumericInput control={this.controls.powerThresholdHigh} state={this.state} setState={this.onChangeValue} />
                     <NumericInput control={this.controls.powerThresholdLow} state={this.state} setState={this.onChangeValue} />

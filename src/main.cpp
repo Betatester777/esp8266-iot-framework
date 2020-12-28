@@ -41,6 +41,7 @@ void onButtonEvent(bool shortPress, bool longPress)
 }
 
 SMAModbusSlave *smaModbusSlave;
+String serverHost;
 
 void setup()
 {
@@ -58,11 +59,16 @@ void setup()
   timeSync.begin();
   fsm_setup();
   pushButtonHandler.begin(ButtonPin, ButtonMode, &onButtonEvent);
-  smaModbusSlave = new SMAModbusSlave(String(configManager.data.serverIp),
+
+  serverHost=String(configManager.data.serverIp);
+  if(configManager.data.serverAddressType==1){
+    serverHost=String(configManager.data.serverDNS);
+  }
+  smaModbusSlave = new SMAModbusSlave(serverHost,
                                       configManager.data.serverPort,
                                       0,
                                       30775,
-                                      4,
+                                      2,
                                       &onPowerChanged);
   
 }
@@ -75,7 +81,7 @@ void loop()
   pushButtonHandler.loop();
   fsmOperationMode->loop();
   modbusRequestDelay = configManager.data.measureInterval * 1000;
-  if (millis() >= (modbusRequestTimer + modbusRequestDelay))
+  if (millis() >= (modbusRequestTimer + modbusRequestDelay) && modbusRequestDelay>0)
   {
     modbusRequestTimer += modbusRequestDelay;
     String stateKey=fsmOperationMode->get_current_state_key();
@@ -83,6 +89,13 @@ void loop()
       if(configManager.data.enableStatusLED){
         indicatePowerMeasureRequest();
       }
+
+      if(configManager.data.serverAddressType==SERVER_ADDRESS_TYPE_DNS){
+        smaModbusSlave->setHostAndPort(configManager.data.serverDNS, configManager.data.serverPort);
+      }else{
+        smaModbusSlave->setHostAndPort(configManager.data.serverIp, configManager.data.serverPort);
+      }
+
       smaModbusSlave->_readRegister();
     }
   }

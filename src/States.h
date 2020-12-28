@@ -25,6 +25,9 @@
 #define OUTPUT_OFF 0
 #define OUTPUT_ON 1
 
+#define SERVER_ADDRESS_TYPE_IP 0
+#define SERVER_ADDRESS_TYPE_DNS 1
+
 void statusLEDBlink();
 
 int randomInRange(int min, int max);

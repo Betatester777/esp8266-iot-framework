@@ -190,11 +190,16 @@ Fetch.propTypes = {
     children: PropTypes.any,
 };
 
+var checkControlVisible=(control, state)=>{
+    if(control.hasOwnProperty("display_filter")){
+        return eval(control.display_filter);
+    }
+    return true;
+}
+
 export const IPv4 = (props) => { 
-    if(props.control.hasOwnProperty("display_filter_value") && props.control.hasOwnProperty("display_filter")){
-        if(props.control.display_filter_value!==props.state[props.control.display_filter]){
-            return null;
-        }
+    if(!checkControlVisible(props.control, props.state)){
+        return null;
     }
 
     const ipProps = {
@@ -237,10 +242,8 @@ export const IPv4 = (props) => {
 }
 
 export const NumericInput = (props) => { 
-    if(props.control.hasOwnProperty("display_filter_value") && props.control.hasOwnProperty("display_filter")){
-        if(props.control.display_filter_value!==props.state[props.control.display_filter]){
-            return null;
-        }
+    if(!checkControlVisible(props.control, props.state)){
+        return null;
     }
 
     let onChangeHandler=function(event){ 
@@ -265,12 +268,38 @@ export const NumericInput = (props) => {
     );
 }
 
-export const Select = (props ) => {
-    if(props.control.hasOwnProperty("display_filter_value") && props.control.hasOwnProperty("display_filter")){
-        if(props.control.display_filter_value!==props.state[props.control.display_filter]){
-            return null;
-        }
+export const DNSName = (props) => { 
+    if(!checkControlVisible(props.control, props.state)){
+        return null;
     }
+
+    let onChangeHandler=function(event){ 
+        let { value} = event.target;
+        let newState={};
+        newState[props.control.name]=value.trim();
+        props.setState(newState);
+    };
+
+    let name=props.control.name;
+    let isReadOnly=false;
+    if(props.control.hasOwnProperty("read_only")){
+        isReadOnly=props.control.read_only;
+    }
+    return (
+        <p>
+            <label htmlFor={name}>
+                <b>{props.control.label}</b>:
+            </label>
+            <input id={name} name={name} type="text" className="input_small" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+        </p>
+    );
+}
+
+export const Select = (props ) => {
+    if(!checkControlVisible(props.control, props.state)){
+        return null;
+    }
+
     let onChangeHandler=function(event){ 
         let { value} = event.target;
         let newState={};
@@ -306,11 +335,10 @@ export const Select = (props ) => {
 }
 
 export const OptGroupSelect = (props ) => {
-    if(props.control.hasOwnProperty("display_filter_value") && props.control.hasOwnProperty("display_filter")){
-        if(props.control.display_filter_value!==props.state[props.control.display_filter]){
-            return null;
-        }
+    if(!checkControlVisible(props.control, props.state)){
+        return null;
     }
+
     let onChangeHandler=function(event){ 
         let { value} = event.target;
         let newState={};
