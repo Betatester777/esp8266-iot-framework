@@ -5,16 +5,6 @@
 #include <StateMachine.h>
 #include <ConfigManager.h>
 
-#define FIRMWARE_VERSION = "0.0.1"
-
-#define RelayPin 12
-#define LEDPinSwitch 13
-#define LEDPinPow 15
-#define ButtonPin 0
-#define KeyBounce 50              //Millisekunden zwischen 2xtasten
-#define KeyLongPressDuration 400 //Millisekunden für langen Tastendruck bei Sonoff Touch als Sender
-#define ButtonMode INPUT_PULLUP
-
 #define MANUAL_OFF "OperationMode_ManualOff"
 #define MANUAL_ON "OperationMode_ManualOn"
 #define POWER_OFF "OperationMode_PowerOff"
@@ -48,10 +38,12 @@ void onEnter_OperationMode_PowerOff();
 void onEnter_OperationMode_PowerOn();
 
 void indicateOperationModeChange();
+void indicateOnOffChange();
 
 void indicatePowerMeasureRequest();
 
 void onTransition_OperationMode_Change();
+void onTransition_OnOff_Change();
 
 void readMeasuredPower();
 

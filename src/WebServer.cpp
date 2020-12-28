@@ -45,7 +45,7 @@ String WebServer::status2json(){
     jsonBuffer["measuredPower"] = measuredPower;
     jsonBuffer["outputStatus"] = outputStatus;
     serializeJson(jsonBuffer, JSON);
-    Serial.println(JSON);
+    //Serial.println(JSON);
     return JSON;
 }
 

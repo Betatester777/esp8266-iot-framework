@@ -49,7 +49,12 @@ void setup()
   LittleFS.begin();
   GUI.begin();
   configManager.begin();
-  WiFiManager.begin("WiFiSolarPlug");
+
+  //Create device ID from serial number
+  String serialNumberString=String(configManager.data.serialNumber);
+  String deviceName=String(configManager.data.serialNumber);
+  deviceName=String(PRODUCT_NAME) + "-" + deviceName.substring(deviceName.length()-3);
+  WiFiManager.begin(deviceName);
   timeSync.begin();
   fsm_setup();
   pushButtonHandler.begin(ButtonPin, ButtonMode, &onButtonEvent);

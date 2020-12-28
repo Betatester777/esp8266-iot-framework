@@ -7,6 +7,7 @@ import { WifiPage } from "./components/WifiPage";
 import { ConfigPage } from "./components/ConfigPage";
 import { StatusPage } from "./components/StatusPage";
 import { FirmwarePage } from "./components/FirmwarePage";
+import Logo from './logo.svg';
 import "./styles.less";
 
 let url = "http://192.168.1.54";
@@ -47,7 +48,8 @@ function Root() {
         <BrowserRouter>
             <Header>
                 <Title>
-                    <Box style={{verticalAlign:"-0.1em", width: "1.4em", height: "1.4em", margin: "0em 0.2em 0em 0.4em"}} />{productName}
+                    <span className="header-logo-container"><Logo className="header-logo" /></span>
+                    <span className="header-text">{productName}</span>
                 </Title>
 
                 <Hamburger onClick={() => setMenu(!menu)} />

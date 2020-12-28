@@ -57,6 +57,10 @@ module.exports = (env, argv) => ({
                 use: [{ loader: 'style-loader' }, { loader: 'css-loader' }, { loader: 'less-loader' }]
             },
             {
+                test: /\.svg$/,
+                use: ['@svgr/webpack'],
+              },
+            {
                 test: /\.(jpg|png|gif)$/,
                 use: [
                     {
@@ -75,7 +79,7 @@ module.exports = (env, argv) => ({
                                 quality: "20-40",
                             },
                         },
-                    },
+                    }
                 ],
             },
         ],

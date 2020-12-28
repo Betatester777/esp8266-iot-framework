@@ -5,6 +5,7 @@ uint32_t configVersion = 3306642818; //generated identifier to compare config wi
 
 const configData defaults PROGMEM =
 {
+	12345,
 	0,
 	2,
 	9225,

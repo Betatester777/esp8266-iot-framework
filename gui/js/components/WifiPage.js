@@ -94,7 +94,7 @@ export function WifiPage(props) {
     if (state.captivePortal === true) {
         connectedTo = "Captive portal running";
     } else if (state.captivePortal === false) {
-        connectedTo = <>Connected to {state.ssid} (<a onClick={() => setForgetModal(true)}>Forget</a>)</>;
+        connectedTo = <>Connected to <span style={{fontWeight: "bold"}}>{state.ssid}</span> (<a onClick={() => setForgetModal(true)}>Forget</a>)</>;
     }
 
     page = <>

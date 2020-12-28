@@ -39,6 +39,8 @@ void PushButtonHandler::loop()
     if (((millis() - _buttonTimer) > _longPressTime) && _longPressActive == false)
     {
       _longPressActive = true;
+      Serial.println(F("Button event: LONG_PRESS"));
+      _onButtonEvent(false, true);
     }
   }
   else
@@ -47,8 +49,6 @@ void PushButtonHandler::loop()
     {
       if (_longPressActive == true)
       {
-        Serial.println(F("Button event: LONG_PRESS"));
-        _onButtonEvent(false, true);
         _longPressActive = false;
       }
       else

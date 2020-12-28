@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <DNSServer.h>
+#include <ESP8266mDNS.h>
 #include <memory>
 class WifiManager
 {
@@ -16,14 +17,15 @@ private:
     IPAddress dns;
     bool reconnect = false;
     bool inCaptivePortal = false;
-    char const *captivePortalName;
-    void startCaptivePortal(char const *apName);
+    String mDNSName;
+    String captivePortalName;
+    void startCaptivePortal(String apName);
     void stopCaptivePortal();
     void connectNewWifi(String newSSID, String newPass);
     void storeToEEPROM();
-
+    void startMDNS();
 public:
-    void begin(char const *apName);
+    void begin(String apName);
     void loop();
     void forget();
     bool isCaptivePortal();

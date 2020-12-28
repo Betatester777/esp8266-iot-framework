@@ -6,11 +6,15 @@
 WifiManager WiFiManager;
 
 //function to call in setup
-void WifiManager::begin(char const *apName)
+void WifiManager::begin(String deviceName)
 {
-    captivePortalName = apName;
+    captivePortalName= deviceName;
+
+    mDNSName = deviceName;
+    mDNSName.toLowerCase();
 
     WiFi.mode(WIFI_STA);
+    WiFi.hostname(deviceName);
 
     //set static IP if entered
     ip = IPAddress(configManager.internal.ip);
@@ -43,6 +47,20 @@ void WifiManager::begin(char const *apName)
     {
         //captive portal
         startCaptivePortal(captivePortalName);
+    }
+
+    startMDNS();
+}
+
+void WifiManager::startMDNS(){
+    if (MDNS.begin(mDNSName))
+    {
+        Serial.println(F("mDNS is running: "));
+        Serial.printf("http://%s.local", mDNSName.c_str());
+    }
+    else
+    {
+        Serial.println("mDNS could not start");
     }
 }
 
@@ -130,7 +148,11 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
                     Serial.println(PSTR("Reconnection successful"));
                     Serial.println(WiFi.localIP());
                 }
+
+                startMDNS();
             }
+
+            
         }
         else
         {
@@ -145,11 +167,13 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
             //store IP address in EEProm
             storeToEEPROM();
         }
+
+
     }
 }
 
 //function to start the captive portal
-void WifiManager::startCaptivePortal(char const *apName)
+void WifiManager::startCaptivePortal(String apName)
 {
     WiFi.persistent(false);
     // disconnect sta, start ap
@@ -167,6 +191,9 @@ void WifiManager::startCaptivePortal(char const *apName)
 
     Serial.println(PSTR("Opened a captive portal"));
     Serial.println(PSTR("192.168.4.1"));
+    
+    delay(2000);
+    startMDNS();
     inCaptivePortal = true;
 }
 
@@ -205,6 +232,8 @@ void WifiManager::loop()
         connectNewWifi(ssid, pass);
         reconnect = false;
     }
+
+    MDNS.update();
 }
 
 //update IP address in EEPROM

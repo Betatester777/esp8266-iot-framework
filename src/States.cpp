@@ -93,6 +93,15 @@ void indicateOperationModeChange()
   tickerBlink.attach_ms(200, statusLEDBlink);
 }
 
+void indicateOnOffChange()
+{
+  Serial.println("change on/off");
+  digitalWrite(LEDPinSwitch, HIGH);
+  blinkCount = 2;
+  tickerBlink.detach();
+  tickerBlink.attach_ms(200, statusLEDBlink);
+}
+
 void indicatePowerMeasureRequest()
 {
   Serial.println("power measure request");
@@ -105,6 +114,11 @@ void indicatePowerMeasureRequest()
 void onTransition_OperationMode_Change()
 {
   indicateOperationModeChange();
+}
+
+void onTransition_OnOff_Change()
+{
+  indicateOnOffChange();
 }
 
 void fsm_setup()
@@ -133,10 +147,10 @@ void fsm_setup()
 
   fsmOperationMode = new Fsm(initialState);
 
-  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_TOGGLE_ON_OFF, NULL);
-  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_TOGGLE_ON_OFF, NULL);
-  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_OFF, NULL);
-  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_ON, NULL);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_TOGGLE_ON_OFF, &onTransition_OnOff_Change);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_TOGGLE_ON_OFF, &onTransition_OnOff_Change);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_ManualOff, TRIGGER_OFF, &onTransition_OnOff_Change);
+  fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_ManualOn, TRIGGER_ON, &onTransition_OnOff_Change);
 
   fsmOperationMode->add_transition(stateOperationMode_PowerOff, stateOperationMode_PowerOn, TRIGGER_POWER_HIGH, NULL);
   fsmOperationMode->add_transition(stateOperationMode_PowerOn, stateOperationMode_PowerOff, TRIGGER_POWER_LOW, NULL);
