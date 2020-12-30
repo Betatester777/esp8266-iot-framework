@@ -5,6 +5,20 @@
 #include <StateMachine.h>
 #include <ConfigManager.h>
 
+enum ButtonEvent { 
+  Release,
+  ShortPressDetect,
+  ShortPressConfirm, 
+  ShortPressConfirm_x2,
+  ShortPressConfirm_x3,
+  ShortPressConfirm_x4,
+  ShortPressConfirm_x5,
+  LongPressDetect,
+  LongPressConfirm,
+  ConstantPressDetect,
+  ConstantPressConfirm
+};
+
 #define MANUAL_OFF "OperationMode_ManualOff"
 #define MANUAL_ON "OperationMode_ManualOn"
 #define POWER_OFF "OperationMode_PowerOff"
@@ -28,9 +42,6 @@
 #define SERVER_ADDRESS_TYPE_IP 0
 #define SERVER_ADDRESS_TYPE_DNS 1
 
-void statusLEDBlink();
-
-int randomInRange(int min, int max);
 
 void onEnter_OperationMode_ManualOff();
 
@@ -39,11 +50,6 @@ void onEnter_OperationMode_ManualOn();
 void onEnter_OperationMode_PowerOff();
 
 void onEnter_OperationMode_PowerOn();
-
-void indicateOperationModeChange();
-void indicateOnOffChange();
-
-void indicatePowerMeasureRequest();
 
 void onTransition_OperationMode_Change();
 void onTransition_OnOff_Change();

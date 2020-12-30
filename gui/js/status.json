@@ -25,7 +25,7 @@
         "label": "Measured power",
         "type": "uint32_t",
         "ui_control":"numeric_input",
-        "value": "unknown",
+        "value": "0",
         "read_only": true
 
     }

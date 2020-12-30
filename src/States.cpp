@@ -1,8 +1,6 @@
 #include <States.h>
+#include <StatusLEDController.h>
 
-int blinkCount = 0;
-Ticker tickerReadMesuredPower;
-Ticker tickerBlink;
 uint32_t measuredPower = 0;
 bool enableMeasurePower = false;
 uint8_t outputStatus = OUTPUT_OFF;
@@ -13,32 +11,6 @@ State *stateOperationMode_PowerOff;
 State *stateOperationMode_PowerOn;
 Fsm *fsmOperationMode;
 
-void statusLEDBlink()
-{
-  if (blinkCount > 0)
-  {
-    digitalWrite(LEDPinSwitch, !digitalRead(LEDPinSwitch));
-    blinkCount--;
-  }
-  else
-  {
-    if (tickerBlink.active())
-    {
-      tickerBlink.detach();
-    }
-  }
-}
-
-int randomInRange(int min, int max) //range : [min, max]
-{
-  static bool first = true;
-  if (first)
-  {
-    srand(time(NULL)); //seeding for the first time only!
-    first = false;
-  }
-  return min + rand() % ((max + 1) - min);
-}
 
 void onEnter_OperationMode_ManualOff()
 {
@@ -84,48 +56,19 @@ void onEnter_OperationMode_PowerOn()
   digitalWrite(RelayPin, HIGH);
 }
 
-void indicateOperationModeChange()
-{
-  Serial.println("change operation mode");
-  digitalWrite(LEDPinSwitch, HIGH);
-  blinkCount = 6;
-  tickerBlink.detach();
-  tickerBlink.attach_ms(200, statusLEDBlink);
-}
-
-void indicateOnOffChange()
-{
-  Serial.println("change on/off");
-  digitalWrite(LEDPinSwitch, HIGH);
-  blinkCount = 2;
-  tickerBlink.detach();
-  tickerBlink.attach_ms(200, statusLEDBlink);
-}
-
-void indicatePowerMeasureRequest()
-{
-  Serial.println("power measure request");
-  digitalWrite(LEDPinSwitch, HIGH);
-  blinkCount = 2;
-  tickerBlink.detach();
-  tickerBlink.attach_ms(200, statusLEDBlink);
-}
-
 void onTransition_OperationMode_Change()
 {
-  indicateOperationModeChange();
+  
 }
 
 void onTransition_OnOff_Change()
 {
-  indicateOnOffChange();
+
 }
 
 void fsm_setup()
 {
-  pinMode(LEDPinSwitch, OUTPUT);
   pinMode(RelayPin, OUTPUT);
-  digitalWrite(LEDPinSwitch, HIGH);
 
   stateOperationMode_ManualOff = new State(MANUAL_OFF, onEnter_OperationMode_ManualOff, NULL, NULL);
   stateOperationMode_ManualOn = new State(MANUAL_ON, onEnter_OperationMode_ManualOn, NULL, NULL);

@@ -6,15 +6,21 @@
 class PushButtonHandler
 {
 private:
+    uint64_t _bootTimeStamp;
+    uint64_t _buttonPressTimeStamp;
+    uint64_t _buttonReleaseTimeStamp;
     uint8_t _buttonPin;
     uint8_t _buttonMode;
-    unsigned long _buttonTimer;
-    unsigned long _longPressTime;
-    bool _shortPressActive;
-    bool _longPressActive;
-    void (*_onButtonEvent)(bool shortPress, bool longPress);
+    uint8_t _shortPressCount;
+    bool _shortPressDetected;
+    bool _longPressDetected;
+    bool _constantPressDetected;
+
+    bool _lastIsButtonPressed;
+
+    void (*_onButtonEvent)(int eventType);
 public:
-    void begin(uint8_t buttonPin, uint8_t buttonMode, void (*onButtonEvent)(bool shortPress, bool longPress));
+    void begin(uint8_t buttonPin, uint8_t buttonMode, void (*onButtonEvent)(int eventType));
     void loop();
 };
 
