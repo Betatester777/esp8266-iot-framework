@@ -1,0 +1,69 @@
+{
+  "common.status.connecting": "wird geladen...",
+
+  "common.menu.config": "Konfiguration",
+  "common.menu.update": "Update",
+  "common.menu.info": "Info",
+  "common.menu.status": "Status",
+  "common.menu.setup": "Setup",
+
+  "common.info.content.title": "Produktinfo",
+  "common.info.content.text": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.   {br}Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.   {br}  {br}  Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.   {br}  {br}  Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.   {br}  {br}  Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis.   {br}  {br}  At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, At accusam aliquyam diam diam dolore dolores duo eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet clita ea et gubergren, kasd magna no rebum. sanctus sea sed takimata ut vero voluptua. est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur",  
+  
+  
+  "setup.legal.content.title": "Willkommen beim Einrichtungsassitenten der Solar Power Socket.",
+  "setup.legal.content.agreement": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
+  "setup.legal.control.accept": "Nutzungsbedingungen akzeptieren",
+  "setup.legal.control.save": "Weiter zu Einrichtung",
+
+  "setup.wifi.content.title": "Wlan Einstellungen",
+  "setup.wifi.control.ssid": "Wlan / SSID des Heimnetzes eintragen",
+  "setup.wifi.control.ssid.info": "Bitte geben Sie den Namen des Wlan Netzes (SSID) ein mit welchen sich die Solar Power Socket verbinden soll.",
+  "setup.wifi.control.password": "Passwort / Netzwerkschlüssel des Heimnetzes eintragen",
+  "setup.wifi.control.password.info": "Das Wlan Passwort oder Netzwerkschlüssel darf folgende gepürfte Sonderzeichen enthalten und maximal 62 Zeichen lang sein.",
+  "setup.wifi.control.use_dhcp": "DHCP aktivieren",
+  "setup.wifi.control.fixed_ip": "Statische IP-Adresse",
+  "setup.wifi.control.subnet_mask": "Netzwerk Maske",
+  "setup.wifi.control.dns_server_ip": "DNS-Server", 
+  "setup.wifi.control.gateway_ip": "Gateway",
+  "setup.wifi.control.back": "Zurück",
+  "setup.wifi.control.save": "Speichern und verbinden",
+
+  "setup.wifi_status.content.title": "Wlan Konfiguration abschließen ",
+  "setup.wifi_status.content.text": "Die Solar Power Socket wird sich nun mit dem ausgewählten Wlan Netz verbinden.Um die weitere Einrichtung vor zunehmen zu können, muss ihr Endgerät in das selbe Netzwerk. Dort können Sie über:{br}{br}PC und iOS (iPhone / iPad){br}{url}{br}{br}Android{br}{android_url}{br}{br}auf die Webobfläche.",
+  "setup.wifi_status.control.back": "Zurück",
+  "setup.wifi_status.control.apply": "OK",
+
+  "setup.server.content.title": "Wechselrichter verbinden",
+  "setup.server.control.type": "Bitte wählen Sie den SMA Wechselrichter aus",
+  "setup.server.control.host": "Geben Sie die IP / DNS Adresse des Wechselrichters ein",
+  "setup.server.control.custom_port": "Abweichenden Port eingeben (Voreinstellung: 502)",
+  "setup.server.control.port": "Geben den Port des Wechselrichters ein",
+  "setup.server.control.save": "Speichern und testen",
+
+  "setup.server_test.content.title": "Testergebnis",
+
+  "setup.server_test.control.connection_status": "IP Verbindung zum Wechselrichter",
+  "setup.server_test.control.connection_status.success": "Erfolgreich",
+  "setup.server_test.control.connection_status.failed": "Verbindungsfehler",
+  "setup.server_test.control.connection_status.failed.hint": "Bitte überprüfen Sie die IP Adresse des Wechselrichters.{br}{br}Weitere Hilfen finden Sie hier: [link]",
+
+  "setup.server_test.control.request_status": "MODBUS-Abfrage",
+  "setup.server_test.control.request_status.success": "Erfolgreich",
+  "setup.server_test.control.request_status.failed": "Abfragefehler",
+  "setup.server_test.control.request_status.failed.hint": "Bitte überprüfen, ob die externe Kommnikation am Wechselrichter nicht aktiviert ist.{br}{br}Weitere Hilfen finden Sie hier: [link]",
+
+  "setup.server_test.control.response_value": "Aktueller Ertrag",
+  "setup.server_test.control.response_value.success": "{value} W",
+  "setup.server_test.control.back": "Zurück",
+  "setup.server_test.control.repeat": "Wiederholen",
+  "setup.server_test.control.save": "Weiter",
+
+  "setup.settings.content.title": "Einschaltbedingungen configurieren",
+  "setup.settings.control.power_threshold_high":"Power threshold HIGH",
+  "setup.settings.control.power_threshold_low":"Power threshold LOW",
+  "setup.settings.control.save" : "Speichern und abschließen",
+
+  "status.content.title": "Status",
+  "setup.complete.control.save": "Zum Hauptmenü"
+}

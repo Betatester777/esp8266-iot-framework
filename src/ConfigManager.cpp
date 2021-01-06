@@ -1,91 +1,500 @@
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <ConfigManager.h>
+#include <WiFiManager.h>
+#include <sstream>
 
 //class functions
-bool config::begin(int numBytes)
+bool ConfigManager::begin(int numBytes)
 {
     EEPROM.begin(numBytes);
 
-    uint32_t storedVersion;
-    uint8_t checksumData = 0;
-    uint8_t checksumInternal = 0;
-
-    EEPROM.get(0, internal);
-    EEPROM.get(SIZE_INTERNAL, checksumInternal);
-    EEPROM.get(SIZE_INTERNAL + 1, storedVersion);
-    EEPROM.get(SIZE_INTERNAL + 5, data);
-    EEPROM.get(SIZE_INTERNAL + 5 + sizeof(data), checksumData);        
-
     bool returnValue = true;
+    testConnectionResult = "{}";
+    testConnection = false;
 
-    //reset configuration data if checksum mismatch
-    if (checksumData != checksum(reinterpret_cast<uint8_t*>(&data), sizeof(data)) || storedVersion != configVersion)
+    uint32_t storedVersion;
+    uint8_t scopeChecksum = 0;
+
+    uint32_t startByte = 0;
+
+    uint8_t resetCopes = 0;
+
+    EEPROM.get(startByte, storedVersion);
+
+    startByte = sizeof(storedVersion);
+    Serial.println("Load [scope=LEGAL, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, legal);
+    EEPROM.get(startByte + sizeof(legal), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&legal), sizeof(legal)) || storedVersion != configVersion)
     {
-        Serial.println(PSTR("Config data checksum mismatch"));
-        reset();
+        Serial.println(PSTR("Checksum mismatch [scope=LEGAL]"));
+        resetCopes |= SCOPE_LEGAL;
+    }
+
+    startByte += sizeof(legal) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=WIFI, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, wifi);
+    EEPROM.get(startByte + sizeof(wifi), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&wifi), sizeof(wifi)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=WIFI]"));
+        resetCopes |= SCOPE_WIFI;
         returnValue = false;
     }
 
-    //reset internal data if checksum mismatch
-    if (checksumInternal != checksum(reinterpret_cast<uint8_t*>(&internal), sizeof(internal)))
+    startByte += sizeof(wifi) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=TIME, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, time);
+    EEPROM.get(startByte + sizeof(time), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&time), sizeof(time)) || storedVersion != configVersion)
     {
-        Serial.println(PSTR("Internal data checksum mismatch"));
-        internal = internalData();
-        save();
+        Serial.println(PSTR("Checksum mismatch [scope=TIME]"));
+        resetCopes |= SCOPE_TIME;
         returnValue = false;
     }
 
-    return returnValue;        
+    startByte += sizeof(time) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SERVER, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, server);
+    EEPROM.get(startByte + sizeof(server), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server), sizeof(server)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SERVER]"));
+        resetCopes |= SCOPE_SERVER;
+        returnValue = false;
+    }
+
+    startByte += sizeof(server) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SERVER_TEST, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, server_test);
+    EEPROM.get(startByte + sizeof(server_test), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server_test), sizeof(server_test)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SERVER_TEST]"));
+        resetCopes |= SCOPE_SERVER_TEST;
+        returnValue = false;
+    }
+
+    startByte += sizeof(server_test) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=TIMER, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, timer);
+    EEPROM.get(startByte + sizeof(timer), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&timer), sizeof(timer)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=TIMER]"));
+        resetCopes |= SCOPE_TIMER;
+        returnValue = false;
+    }
+
+    startByte += sizeof(timer) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SETTINGS, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, settings);
+    EEPROM.get(startByte + sizeof(settings), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&settings), sizeof(settings)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SETTINGS]"));
+        resetCopes |= SCOPE_SETTINGS;
+        returnValue = false;
+    }
+
+    Serial.println("Load EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
+
+    if (resetCopes > 0)
+    {
+        reset(resetCopes);
+    }
+
+    return returnValue;
 }
 
-void config::reset()
+String ConfigManager::getDeviceName()
 {
-    memcpy_P(&data, &defaults, sizeof(data));
-    save();
+    String serialNumber = "000";
+    String deviceId = serialNumber.substring(serialNumber.length() - 3, 3);
+
+    return String(PRODUCT_NAME) + "-" + deviceId;
 }
 
-void config::saveRaw(uint8_t bytes[])
+void ConfigManager::reset(uint8_t scope)
 {
-    memcpy(&data,bytes,sizeof(data));
-    save();
+    if ((scope & SCOPE_LEGAL) == SCOPE_LEGAL)
+    {
+        memcpy_P(&legal, &legalDefaults, sizeof(legal));
+    }
+
+    if ((scope & SCOPE_WIFI) == SCOPE_WIFI)
+    {
+        wifiManager.forget();
+        memcpy_P(&wifi, &wifiDefaults, sizeof(wifi));
+    }
+
+    if ((scope & SCOPE_TIME) == SCOPE_TIME)
+    {
+        memcpy_P(&time, &timeDefaults, sizeof(time));
+    }
+
+    if ((scope & SCOPE_SERVER) == SCOPE_SERVER)
+    {
+        memcpy_P(&server, &serverDefaults, sizeof(server));
+    }
+
+    if ((scope & SCOPE_SERVER_TEST) == SCOPE_SERVER_TEST)
+    {
+        memcpy_P(&server_test, &serverTestDefaults, sizeof(server_test));
+    }
+
+    if ((scope & SCOPE_TIMER) == SCOPE_TIMER)
+    {
+        memcpy_P(&timer, &timerDefaults, sizeof(timer));
+    }
+
+    if ((scope & SCOPE_SETTINGS) == SCOPE_SETTINGS)
+    {
+        memcpy_P(&settings, &settingsDefaults, sizeof(settings));
+    }
+
+    save(scope);
 }
 
-void config::saveExternal(configData *extData)
+int ConfigManager::save(uint8_t scope)
 {
-    memcpy(&data, extData, sizeof(data));
-    save();
-}
+    uint32_t startByte = 0;
+    uint8_t scopeChecksum = 0;
 
-void config::save()
-{
-    EEPROM.put(0, internal);
+    EEPROM.put(startByte, configVersion);
 
-    //save checksum for internal data
-    EEPROM.put(SIZE_INTERNAL, checksum(reinterpret_cast<uint8_t*>(&internal), sizeof(internal)));
+    startByte = sizeof(configVersion);
 
-    EEPROM.put(SIZE_INTERNAL + 1, configVersion);
-    EEPROM.put(SIZE_INTERNAL + 5, data);
+    if ((scope & SCOPE_LEGAL) == SCOPE_LEGAL)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&legal), sizeof(legal));
+        Serial.println("Save [scope=LEGAL, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, legal);
+        EEPROM.put(startByte + sizeof(legal), scopeChecksum);
+    }
 
-    //save checksum for configuration data
-    EEPROM.put(SIZE_INTERNAL + 5 + sizeof(data), checksum(reinterpret_cast<uint8_t*>(&data), sizeof(data)));
-    
+    startByte += sizeof(legal) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_WIFI) == SCOPE_WIFI)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&wifi), sizeof(wifi));
+        Serial.println("Save [scope=WIFI, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, wifi);
+        EEPROM.put(startByte + sizeof(wifi), scopeChecksum);
+    }
+
+    startByte += sizeof(wifi) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_TIME) == SCOPE_TIME)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&time), sizeof(time));
+        Serial.println("Save [scope=TIME, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, time);
+        EEPROM.put(startByte + sizeof(time), scopeChecksum);
+    }
+
+    startByte += sizeof(time) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_SERVER) == SCOPE_SERVER)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&server), sizeof(server));
+        Serial.println("Save [scope=SERVER, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, server);
+        EEPROM.put(startByte + sizeof(server), scopeChecksum);
+    }
+
+    startByte += sizeof(server) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_SERVER_TEST) == SCOPE_SERVER_TEST)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&server_test), sizeof(server_test));
+        Serial.println("Save [scope=SERVER_TEST, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, server_test);
+        EEPROM.put(startByte + sizeof(server_test), scopeChecksum);
+    }
+
+    startByte += sizeof(server_test) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_TIMER) == SCOPE_TIMER)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&timer), sizeof(timer));
+        Serial.println("Save [scope=TIMER, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, timer);
+        EEPROM.put(startByte + sizeof(timer), scopeChecksum);
+    }
+
+    startByte += sizeof(timer) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_SETTINGS) == SCOPE_SETTINGS)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&settings), sizeof(settings));
+        Serial.println("Save [scope=SETTINGS, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, settings);
+        EEPROM.put(startByte + sizeof(settings), scopeChecksum);
+    }
+
+    Serial.println("Save EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
     EEPROM.commit();
+    return 0;
 }
 
-uint8_t config::checksum(uint8_t *byteArray, unsigned long length)
+uint8_t ConfigManager::checksum(uint8_t *byteArray, unsigned long length)
 {
     uint8_t value = 0;
     unsigned long counter;
 
-    for (counter=0; counter<length; counter++)
+    for (counter = 0; counter < length; counter++)
     {
         value += *byteArray;
         byteArray++;
     }
 
-    return (uint8_t)(256-value);
-
+    return (uint8_t)(256 - value);
 }
 
-config configManager;
+String ConfigManager::converIPv4ToString(uint32_t ip)
+{
+    String ret = "0.0.0.0";
+
+    if (ip > 0)
+    {
+        ret = IPAddress(ip).toString();
+    }
+    return ret;
+}
+
+uint32_t ConfigManager::converStringToIPv4(String ipString)
+{
+    uint32_t ret = 0;
+    IPAddress ip;
+    if (ip.fromString(ipString))
+    {
+        ret = ip;
+    }
+
+    return ret;
+}
+
+String ConfigManager::getJSONString(uint8_t scope)
+{
+    String JSON;
+    StaticJsonDocument<1024> jsonBuffer;
+
+    if ((scope & SCOPE_LEGAL) == SCOPE_LEGAL)
+    {
+        //legal
+        jsonBuffer["userAgreementAccepted"] = (uint8_t)configManager.legal.userAgreementAccepted;
+        jsonBuffer["countryCode"] = configManager.legal.countryCode;
+    }
+
+    if ((scope & SCOPE_WIFI) == SCOPE_WIFI)
+    {
+        jsonBuffer["ssid"] = "";
+        jsonBuffer["captivePortal"] = (uint8_t)wifiManager.isCaptivePortal();
+        jsonBuffer["ssid"] = wifiManager.SSID();
+        jsonBuffer["password"] = ""; // v4IpToString(configManager.wifi.password);
+        jsonBuffer["useDHCP"] = (uint8_t)configManager.wifi.useDHCP;
+        jsonBuffer["fixedIp"] = converIPv4ToString(configManager.wifi.fixedIp);
+        jsonBuffer["subnetMask"] = converIPv4ToString(configManager.wifi.subnetMask);
+        jsonBuffer["dnsServerIp"] = converIPv4ToString(configManager.wifi.dnsServerIp);
+        jsonBuffer["gatewayIp"] = converIPv4ToString(configManager.wifi.gatewayIp);
+        jsonBuffer["mdnsName"] = configManager.getDeviceName();
+    }
+
+    if ((scope & SCOPE_TIME) == SCOPE_TIME)
+    {
+        jsonBuffer["enableDaylightSavingTime"] = configManager.time.enableDaylightSavingTime;
+        jsonBuffer["timeZone"] = configManager.time.timeZone;
+        jsonBuffer["useNTP"] = configManager.time.useNTP;
+        jsonBuffer["ntpServer"] = configManager.time.ntpServer;
+    }
+
+    if ((scope & SCOPE_SERVER) == SCOPE_SERVER)
+    {
+        jsonBuffer["serverProductId"] = configManager.server.serverProductId;
+        jsonBuffer["serverHost"] = String(configManager.server.serverHost);
+        jsonBuffer["serverPort"] = configManager.server.serverPort;
+        jsonBuffer["measureInterval"] = configManager.server.measureInterval;
+    }
+
+    if ((scope & SCOPE_SERVER_TEST) == SCOPE_SERVER_TEST)
+    {
+        jsonBuffer["isComplete"] = configManager.server_test.isComplete;
+    }
+
+    if ((scope & SCOPE_TIMER) == SCOPE_TIMER)
+    {
+        //TODO: implement later
+    }
+
+    if ((scope & SCOPE_SETTINGS) == SCOPE_SETTINGS)
+    {
+        jsonBuffer["operationMode"] = configManager.settings.operationMode;
+        jsonBuffer["powerThresholdHigh"] = configManager.settings.powerThresholdHigh;
+        jsonBuffer["powerThresholdLow"] = configManager.settings.powerThresholdLow;
+        jsonBuffer["maximalDailyDurationHigh"] = configManager.settings.maximalDailyDurationHigh;
+        jsonBuffer["enableStatusLED"] = configManager.settings.enableStatusLED;
+    }
+
+    serializeJson(jsonBuffer, JSON);
+    Serial.println(JSON);
+    return JSON;
+}
+
+String ConfigManager::getSetupStatusJSONString()
+{
+    String JSON;
+    StaticJsonDocument<1024> jsonBuffer;
+    jsonBuffer["legal"] = (uint8_t)legal.isComplete;
+    jsonBuffer["wifi"] = (uint8_t)wifi.isComplete;
+    jsonBuffer["time"] = (uint8_t)time.isComplete;
+    jsonBuffer["server"] = (uint8_t)server.isComplete;
+    jsonBuffer["server_test"] = (uint8_t)server_test.isComplete;
+    jsonBuffer["timer"] = (uint8_t)timer.isComplete;
+    jsonBuffer["settings"] = (uint8_t)settings.isComplete;
+
+    serializeJson(jsonBuffer, JSON);
+    Serial.println(JSON);
+    return JSON;
+}
+
+int ConfigManager::setJSONString(uint8_t scope, String config)
+{
+    {
+        Serial.println(config);
+
+        DynamicJsonDocument doc(1024);
+        IPAddress serverIp;
+
+        deserializeJson(doc, config);
+        JsonObject obj = doc.as<JsonObject>();
+
+        IPAddress ip;
+
+        if ((scope & SCOPE_LEGAL) == SCOPE_LEGAL)
+        {
+            legal.isComplete = false;
+            bool tmpUserAgreementAccepted = (bool)obj[String("userAgreementAccepted")].as<uint8_t>();
+
+            if (tmpUserAgreementAccepted)
+            {
+                legal.isComplete = true;
+                legal.userAgreementAccepted = tmpUserAgreementAccepted;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        if ((scope & SCOPE_WIFI) == SCOPE_WIFI)
+        {
+
+            wifi.isComplete = false;
+            setupSsid = obj[String("ssid")].as<String>();
+            setupPassword = obj[String("password")].as<String>();
+
+            wifi.useDHCP = (bool)obj[String("useDHCP")].as<uint8_t>();
+            wifi.fixedIp = converStringToIPv4(obj[String("fixedIp")].as<String>());
+            wifi.subnetMask = converStringToIPv4(obj[String("subnetMask")].as<String>());
+            wifi.gatewayIp = converStringToIPv4(obj[String("gatewayIp")].as<String>());
+            wifi.dnsServerIp = converStringToIPv4(obj[String("dnsServerIp")].as<String>());
+
+            if (setupSsid.length() >= 1 && setupSsid.length() <= 32 && setupPassword.length() >= 8 && setupPassword.length() < 100)
+            {
+                if (wifi.useDHCP)
+                {
+                    wifi.isComplete = true;
+                }
+                else if (wifi.fixedIp > 0)
+                {
+                    wifi.isComplete = true;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        if ((scope & SCOPE_TIME) == SCOPE_TIME)
+        {
+            timer.isComplete = false;
+            time.useNTP = (bool)obj[String("useNTP")].as<uint8_t>();
+        }
+
+        if ((scope & SCOPE_SERVER) == SCOPE_SERVER)
+        {
+            server.isComplete = false;
+            uint16_t tmpProductId = obj[String("serverProductId")].as<uint16_t>();
+            String tmpHost = obj[String("serverHost")].as<String>();
+            uint16_t tmpPort = obj[String("serverPort")].as<uint16_t>();
+            uint32_t tmpInterval = obj[String("measureInterval")].as<uint32_t>();
+
+            if (tmpProductId > 0 && tmpHost.length() > 0 && tmpPort > 0 && tmpPort <= 65535 && tmpInterval > 10)
+            {
+                server.serverProductId = tmpProductId;
+                strcpy(server.serverHost, tmpHost.c_str());
+                server.serverPort = tmpPort;
+                server.measureInterval = tmpInterval;
+                server.isComplete = true;
+                Serial.println("Server setup complete");
+            }
+            else
+            {
+                Serial.println("Server setup error: invalid params");
+                return 1;
+            }
+        }
+
+        if ((scope & SCOPE_SERVER_TEST) == SCOPE_SERVER_TEST)
+        {
+            server_test.isComplete = (bool)obj[String("serverTestIsComplete")].as<uint8_t>();
+        }
+
+        if ((scope & SCOPE_TIMER) == SCOPE_TIMER)
+        {
+            //TODO: implement later
+            timer.isComplete = false;
+        }
+
+        if ((scope & SCOPE_SETTINGS) == SCOPE_SETTINGS)
+        {
+            settings.isComplete = false;
+
+            uint8_t tmpProtectionType = obj[String("configurationProtectionType")].as<uint8_t>();
+            uint8_t tmpOperationMode = obj[String("operationMode")].as<uint8_t>();
+            uint32_t tmpPowerThresholdHigh = obj[String("powerThresholdHigh")].as<uint32_t>();
+            uint32_t tmpPowerThresholdLow = obj[String("powerThresholdLow")].as<uint32_t>();
+            bool tmpEnableStatusLED = (bool)obj[String("enableStatusLED")].as<uint8_t>();
+
+            if (tmpPowerThresholdLow >= 20 && tmpPowerThresholdLow <= 20000 && tmpPowerThresholdHigh >= 20 && tmpPowerThresholdLow <= 20000 && tmpPowerThresholdLow <= tmpPowerThresholdHigh)
+            {
+                settings.configurationProtectionType = tmpProtectionType;
+                settings.operationMode = tmpOperationMode;
+                settings.powerThresholdHigh = tmpPowerThresholdHigh;
+                settings.powerThresholdLow = tmpPowerThresholdLow;
+                settings.enableStatusLED = tmpEnableStatusLED;
+                settings.isComplete = true;
+                Serial.println("Settings setup success");
+            }
+            else
+            {
+                Serial.println("Settings setup error: invalid params");
+                return 1;
+            }
+        }
+
+        save(scope);
+    }
+
+    return 0;
+}
+
+ConfigManager configManager;

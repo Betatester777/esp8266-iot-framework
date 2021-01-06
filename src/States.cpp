@@ -15,10 +15,10 @@ Fsm *fsmOperationMode;
 void onEnter_OperationMode_ManualOff()
 {
   Serial.println("Entering state: OperationMode_ManualOff");
-  if (configManager.data.operationMode != OPERATION_MODE_MANUAL)
+  if (configManager.settings.operationMode != OPERATION_MODE_MANUAL)
   {
-    configManager.data.operationMode = OPERATION_MODE_MANUAL;
-    configManager.save();
+    configManager.settings.operationMode = OPERATION_MODE_MANUAL;
+    configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, LOW);
 }
@@ -26,10 +26,10 @@ void onEnter_OperationMode_ManualOff()
 void onEnter_OperationMode_ManualOn()
 {
   Serial.println("Entering state: OperationMode_ManualOn");
-  if (configManager.data.operationMode != OPERATION_MODE_MANUAL)
+  if (configManager.settings.operationMode != OPERATION_MODE_MANUAL)
   {
-    configManager.data.operationMode = OPERATION_MODE_MANUAL;
-    configManager.save();
+    configManager.settings.operationMode = OPERATION_MODE_MANUAL;
+    configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, HIGH);
 }
@@ -37,10 +37,10 @@ void onEnter_OperationMode_ManualOn()
 void onEnter_OperationMode_PowerOff()
 {
   Serial.println("Entering state: OperationMode_PowerOff");
-  if (configManager.data.operationMode != OPERATION_MODE_POWER)
+  if (configManager.settings.operationMode != OPERATION_MODE_POWER)
   {
-    configManager.data.operationMode = OPERATION_MODE_POWER;
-    configManager.save();
+    configManager.settings.operationMode = OPERATION_MODE_POWER;
+    configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, LOW);
 }
@@ -48,10 +48,10 @@ void onEnter_OperationMode_PowerOff()
 void onEnter_OperationMode_PowerOn()
 {
   Serial.println("Entering state: OperationMode_PowerOn");
-  if (configManager.data.operationMode != OPERATION_MODE_POWER)
+  if (configManager.settings.operationMode != OPERATION_MODE_POWER)
   {
-    configManager.data.operationMode = OPERATION_MODE_POWER;
-    configManager.save();
+    configManager.settings.operationMode = OPERATION_MODE_POWER;
+    configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, HIGH);
 }
@@ -76,7 +76,7 @@ void fsm_setup()
   stateOperationMode_PowerOn = new State(POWER_ON, onEnter_OperationMode_PowerOn, NULL, NULL);
 
   State *initialState;
-  switch (configManager.data.operationMode)
+  switch (configManager.settings.operationMode)
   {
   case OPERATION_MODE_MANUAL:
     initialState = stateOperationMode_ManualOff;

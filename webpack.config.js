@@ -88,6 +88,7 @@ module.exports = (env, argv) => ({
     optimization: {
         minimize: true,
     },
+
     devtool: 'source-map',
 
     resolve: {

@@ -1,51 +1,12 @@
 #include <WebServer.h>
 
-String WebServer::config2json(){
+std::queue<std::function<void()>> serverConnectionTestQueue;
+
+String WebServer::status2json()
+{
     String JSON;
     StaticJsonDocument<1024> jsonBuffer;
-
-    jsonBuffer["useNTP"] = configManager.data.useNTP;
-    jsonBuffer["operationMode"] = configManager.data.operationMode;
-    jsonBuffer["serverProductId"] = configManager.data.serverProductId;
-    jsonBuffer["serverAddressType"] = configManager.data.serverAddressType;
-    jsonBuffer["serverIp"] = String(configManager.data.serverIp);
-    jsonBuffer["serverDNS"] = String(configManager.data.serverDNS);
-    jsonBuffer["serverPort"] = configManager.data.serverPort;
-    jsonBuffer["powerThresholdHigh"] = configManager.data.powerThresholdHigh;
-    jsonBuffer["powerThresholdLow"] = configManager.data.powerThresholdLow;
-    jsonBuffer["measureInterval"] = configManager.data.measureInterval;
-    jsonBuffer["enableStatusLED"] = configManager.data.enableStatusLED;
-    serializeJson(jsonBuffer, JSON);
-    Serial.println(JSON);
-    return JSON;
-}
-
-void WebServer::json2config(String configData){
-    Serial.println(configData);
-
-    DynamicJsonDocument doc(1024);
-
-    deserializeJson(doc, configData);
-    JsonObject obj = doc.as<JsonObject>();
-
-    configManager.data.useNTP= obj[String("useNTP")].as<uint8_t>();
-    configManager.data.operationMode= obj[String("operationMode")].as<uint8_t>();
-    configManager.data.serverProductId= obj[String("serverProductId")].as<uint16_t>();
-    configManager.data.serverAddressType= obj[String("serverAddressType")].as<uint8_t>();
-    strcpy(configManager.data.serverIp, obj[String("serverIp")].as<String>().c_str());
-    strcpy(configManager.data.serverDNS, obj[String("serverDNS")].as<String>().c_str());
-    configManager.data.serverPort= obj[String("serverPort")].as<uint16_t>();
-    configManager.data.powerThresholdHigh= obj[String("powerThresholdHigh")].as<uint32_t>();
-    configManager.data.powerThresholdLow= obj[String("powerThresholdLow")].as<uint32_t>();
-    configManager.data.measureInterval= obj[String("measureInterval")].as<uint32_t>();
-    configManager.data.enableStatusLED= obj[String("enableStatusLED")].as<uint8_t>();
-}
-
-String WebServer::status2json(){
-    String JSON;
-    StaticJsonDocument<1024> jsonBuffer;
-
-    jsonBuffer["operationMode"] = configManager.data.operationMode;
+    jsonBuffer["operationMode"] = configManager.settings.operationMode;
     jsonBuffer["measuredPower"] = measuredPower;
     jsonBuffer["outputStatus"] = outputStatus;
     serializeJson(jsonBuffer, JSON);
@@ -68,7 +29,6 @@ void WebServer::begin()
     //handle uploads
     server.on(
         PSTR("/upload"), HTTP_POST, [](AsyncWebServerRequest *request) {}, handleFileUpload);
-
     bindAll();
 }
 
@@ -81,33 +41,11 @@ void WebServer::bindAll()
     });
 
     //update WiFi details
-    server.on(PSTR("/api/wifi/set"), HTTP_POST, [](AsyncWebServerRequest *request) {
+    server.on(PSTR("/api/reset/factory"), HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("Factory reset...");
         request->send(200, PSTR("text/html"), ""); //respond first because of wifi change
-        WiFiManager.setNewWifi(request->arg("ssid"), request->arg("pass"));
-    });
-
-    //update WiFi details with static IP
-    server.on(PSTR("/api/wifi/setStatic"), HTTP_POST, [](AsyncWebServerRequest *request) {
-        request->send(200, PSTR("text/html"), ""); //respond first because of wifi change
-        WiFiManager.setNewWifi(request->arg("ssid"), request->arg("pass"), request->arg("ip"), request->arg("sub"), request->arg("gw"), request->arg("dns"));
-    });
-
-    //update WiFi details
-    server.on(PSTR("/api/wifi/forget"), HTTP_POST, [](AsyncWebServerRequest *request) {
-        request->send(200, PSTR("text/html"), ""); //respond first because of wifi change
-        WiFiManager.forget();
-    });
-
-    //get WiFi details
-    server.on(PSTR("/api/wifi/get"), HTTP_GET, [](AsyncWebServerRequest *request) {
-        String JSON;
-        StaticJsonDocument<200> jsonBuffer;
-
-        jsonBuffer["captivePortal"] = WiFiManager.isCaptivePortal();
-        jsonBuffer["ssid"] = WiFiManager.SSID();
-        serializeJson(jsonBuffer, JSON);
-
-        request->send(200, PSTR("text/html"), JSON);
+        configManager.reset(SCOPE_LEGAL | SCOPE_WIFI | SCOPE_SERVER | SCOPE_SERVER_TEST | SCOPE_TIME | SCOPE_TIMER | SCOPE_SETTINGS);
+        wifiManager.forget();
     });
 
     //get file listing
@@ -155,112 +93,213 @@ void WebServer::bindAll()
         request->send(200, PSTR("text/html"), JSON);
     });
 
+    server.on(PSTR("/api/setup/status/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, PSTR("'application/json'"), configManager.getSetupStatusJSONString());
+    });
+
+    server.on(PSTR("/api/setup/legal/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        String JSON = configManager.getJSONString(SCOPE_LEGAL);
+        Serial.println("Get legal setup:" + JSON);
+        request->send(200, PSTR("'application/json'"), JSON);
+    });
+
+    server.on(PSTR("/api/setup/legal/set"), HTTP_POST,
+              [this](AsyncWebServerRequest *request) {
+                  configManager.setJSONString(SCOPE_LEGAL, request->arg("data"));
+                  Serial.println("save legal success");
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
+
+    server.on(PSTR("/api/setup/wifi/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        String JSON = configManager.getJSONString(SCOPE_WIFI);
+        Serial.println("Get wifi setup:" + JSON);
+        request->send(200, PSTR("'application/json'"), JSON);
+    });
+
+    server.on(PSTR("/api/setup/wifi/networks/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        String JSON = wifiManager.scanNetworks();
+        request->send(200, PSTR("'application/json'"), JSON);
+    });
+
+    server.on(PSTR("/api/setup/wifi/set"), HTTP_POST, [this](AsyncWebServerRequest *request) {
+        configManager.setJSONString(SCOPE_WIFI, request->arg("data"));
+        Serial.println("save wifi success");
+        request->send(200, PSTR("'text/html'"), "OK");
+        wifiManager.setNewWifi(configManager.setupSsid,
+                               configManager.setupPassword,
+                               configManager.wifi.useDHCP,
+                               configManager.wifi.fixedIp,
+                               configManager.wifi.subnetMask,
+                               configManager.wifi.gatewayIp,
+                               configManager.wifi.dnsServerIp);
+    });
+
+    server.on(PSTR("/api/setup/server/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, PSTR("'application/json'"), configManager.getJSONString(SCOPE_SERVER));
+    });
+
+    server.on(PSTR("/api/setup/server/set"), HTTP_POST,
+              [this](AsyncWebServerRequest *request) {
+                  configManager.setJSONString(SCOPE_SERVER, request->arg("data"));
+                  Serial.println("save server setup success");
+                  if (configManager.server.isComplete)
+                  {
+                      request->send(200, PSTR("'text/html'"), "OK");
+                  }
+                  else
+                  {
+                      request->send(200, PSTR("'text/html'"), "ERROR");
+                  }
+              });
+
+    server.on(PSTR("/api/setup/server_test/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        configManager.testConnectionResult = "{}";
+        configManager.testConnection = true;
+        serverConnectionTestQueue.push(std::bind(
+            [this](AsyncWebServerRequest *request) {
+                request->send(200, PSTR("'application/json'"), configManager.testConnectionResult);
+            },
+            request));
+    });
+
+    server.on(PSTR("/api/setup/server_test/set"), HTTP_POST,
+              [this](AsyncWebServerRequest *request) {
+                  configManager.setJSONString(SCOPE_SERVER_TEST, request->arg("data"));
+                  Serial.println("save server test setup success");
+                  if (configManager.server.isComplete)
+                  {
+                      request->send(200, PSTR("'text/html'"), "OK");
+                  }
+                  else
+                  {
+                      request->send(200, PSTR("'text/html'"), "ERROR");
+                  }
+              });
+
+    server.on(PSTR("/api/setup/settings/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, PSTR("'application/json'"), configManager.getJSONString(SCOPE_SETTINGS));
+    });
+
+    server.on(PSTR("/api/setup/settings/set"), HTTP_POST,
+              [this](AsyncWebServerRequest *request) {
+                  configManager.setJSONString(SCOPE_SETTINGS, request->arg("data"));
+                  Serial.println("save server setup success");
+                  if (configManager.settings.isComplete)
+                  {
+                      request->send(200, PSTR("'text/html'"), "OK");
+                  }
+                  else
+                  {
+                      request->send(200, PSTR("'text/html'"), "ERROR");
+                  }
+              });
+
+    server.on(PSTR("/api/setup/complete/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        String JSON = "{}";
+        request->send(200, PSTR("'application/json'"), JSON); });
+
     //send binary configuration data
+    /*
     server.on(PSTR("/api/config/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, PSTR("'application/json'"), config2json());
     });
 
     //receive binary configuration data from body
     server.on(PSTR("/api/config/set"), HTTP_POST,
-        [this](AsyncWebServerRequest *request) {
-        uint8_t lastOperationMode=configManager.data.operationMode;
-        json2config(request->arg("data"));
-        configManager.save();
+              [this](AsyncWebServerRequest *request) {
+                  uint8_t lastOperationMode = configManager.settings.operationMode;
 
-        if(lastOperationMode!=configManager.data.operationMode){
-            fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
-        }
-        Serial.println("save config success");      
 
-        config2json();        
-        request->send(200, PSTR("'text/html'"), "OK");
-        }
-    );
+                  if (lastOperationMode != configManager.settings.operationMode)
+                  {
+                      fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
+                  }
+                  Serial.println("save config success");
 
+                  config2json();
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
+*/
     //send binary configuration data
     server.on(PSTR("/api/status/get"), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, PSTR("'application/json'"), status2json());
     });
 
     server.on(PSTR("/api/status/operation_mode/power"), HTTP_GET,
-        [this](AsyncWebServerRequest *request) {
-            configManager.data.operationMode=OPERATION_MODE_POWER;
-            configManager.save();
-            fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_POWER);
-            Serial.println("change operation mode: POWER"); 
-            
-            request->send(200, PSTR("'text/html'"), "OK");
-        }
-    );
+              [this](AsyncWebServerRequest *request) {
+                  configManager.settings.operationMode = OPERATION_MODE_POWER;
+                  configManager.save(SCOPE_SETTINGS);
+                  fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_POWER);
+                  Serial.println("change operation mode: POWER");
+
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
 
     server.on(PSTR("/api/status/operation_mode/manual"), HTTP_GET,
-        [this](AsyncWebServerRequest *request) {
-            configManager.data.operationMode=OPERATION_MODE_MANUAL;
-            configManager.save();
-            fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_MANUAL);
-            Serial.println("change operation mode: MANUAL");             
-            request->send(200, PSTR("'text/html'"), "OK");
-        }
-    );
+              [this](AsyncWebServerRequest *request) {
+                  configManager.settings.operationMode = OPERATION_MODE_MANUAL;
+                  configManager.save(SCOPE_SETTINGS);
+                  fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_MANUAL);
+                  Serial.println("change operation mode: MANUAL");
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
 
     server.on(PSTR("/api/status/output/on"), HTTP_GET,
-        [this](AsyncWebServerRequest *request) {
-            fsmOperationMode->trigger(TRIGGER_ON);            
-            request->send(200, PSTR("'text/html'"), "OK");
-        }
-    );
+              [this](AsyncWebServerRequest *request) {
+                  fsmOperationMode->trigger(TRIGGER_ON);
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
 
     server.on(PSTR("/api/status/output/off"), HTTP_GET,
-        [this](AsyncWebServerRequest *request) {
-            fsmOperationMode->trigger(TRIGGER_OFF);            
-            request->send(200, PSTR("'text/html'"), "OK");
-        }
-    );
+              [this](AsyncWebServerRequest *request) {
+                  fsmOperationMode->trigger(TRIGGER_OFF);
+                  request->send(200, PSTR("'text/html'"), "OK");
+              });
 }
 
 // Callback for the html
 void WebServer::serveProgmem(AsyncWebServerRequest *request)
 {
-        // Dump the byte array in PROGMEM with a 200 HTTP code (OK)
-        AsyncWebServerResponse *response = request->beginResponse_P(200, PSTR("text/html"), html, html_len);
+    // Dump the byte array in PROGMEM with a 200 HTTP code (OK)
+    AsyncWebServerResponse *response = request->beginResponse_P(200, PSTR("text/html"), html, html_len);
 
-        // Tell the browswer the content is Gzipped
-        response->addHeader(PSTR("Content-Encoding"), PSTR("gzip"));
+    // Tell the browswer the content is Gzipped
+    response->addHeader(PSTR("Content-Encoding"), PSTR("gzip"));
 
-        request->send(response);    
+    request->send(response);
 }
 
 void WebServer::handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
-        static File fsUploadFile;
+    static File fsUploadFile;
 
-        if (!index)
-        {
-            Serial.println(PSTR("Start file upload"));
-            Serial.println(filename);
+    if (!index)
+    {
+        Serial.println(PSTR("Start file upload"));
+        Serial.println(filename);
 
-            if (!filename.startsWith("/"))
-                filename = "/" + filename;
+        if (!filename.startsWith("/"))
+            filename = "/" + filename;
 
-            fsUploadFile = LittleFS.open(filename, "w");
-        }
+        fsUploadFile = LittleFS.open(filename, "w");
+    }
 
-        for (size_t i = 0; i < len; i++)
-        {
-            fsUploadFile.write(data[i]);
-        }
+    for (size_t i = 0; i < len; i++)
+    {
+        fsUploadFile.write(data[i]);
+    }
 
-        if (final)
-        {
-            String JSON;
-            StaticJsonDocument<100> jsonBuffer;
+    if (final)
+    {
+        String JSON;
+        StaticJsonDocument<100> jsonBuffer;
 
-            jsonBuffer["success"] = fsUploadFile.isFile();
-            serializeJson(jsonBuffer, JSON);
+        jsonBuffer["success"] = fsUploadFile.isFile();
+        serializeJson(jsonBuffer, JSON);
 
-            request->send(200, PSTR("text/html"), JSON);
-            fsUploadFile.close();
-        }
+        request->send(200, PSTR("text/html"), JSON);
+        fsUploadFile.close();
+    }
 }
 
 WebServer GUI;

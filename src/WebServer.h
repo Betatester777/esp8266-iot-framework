@@ -1,9 +1,9 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
-
 #include <ESPAsyncWebServer.h>
 #include "ArduinoJson.h"
 #include "LittleFS.h"
+#include <SMA/SMAModbusSlave.h>
 
 // Include the header file we create with webpack
 #include "generated/html.h"
@@ -13,7 +13,7 @@
 #include <ConfigManager.h>
 #include <Updater.h>
 #include <States.h>
-
+#include <queue>
 class WebServer
 {
 private:    
@@ -22,8 +22,6 @@ private:
     static void serveProgmem(AsyncWebServerRequest *request);
     void bindAll();
     uint8_t desiredOutputStatus;
-    String config2json();
-    void json2config(String configData);
     String status2json();
 public:
     AsyncWebSocket ws = AsyncWebSocket("/ws");
@@ -31,5 +29,6 @@ public:
 };
 
 extern WebServer GUI;
+extern std::queue<std::function<void()>> serverConnectionTestQueue;
 
 #endif

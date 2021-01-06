@@ -190,7 +190,7 @@ body {
   line-height: 1.4em;
 
   @media (max-width: 500px) {
-    font-size: 1em;
+    font-size: 1.2em;
   }
 }
 
@@ -221,6 +221,48 @@ label {
     display  : block !important;
     max-width: initial !important;
   }
+}
+
+.status-label {
+  @media (max-width: 760px) {
+    display  : block !important;
+    max-width: initial !important;
+  }
+
+  font-size    : 1.2em;
+  display      : inline-block;
+  min-width    : 250px;
+  max-width    : 250px;
+  padding-right: 1em;
+}
+
+.status {
+  font-weight  : bold;
+  width        : 450px;
+  max-width    : 100%;
+  box-sizing   : border-box;
+  padding      : 0.3em;
+  text-align   : center;
+  border-radius: 4px;
+  padding      : 0.5em 1em 0.5em 1em;
+  border       : none;
+  font-size    : 1.5em;
+  margin       : 0.2em auto 1em auto;
+}
+
+.status-hint {
+  background-color: whitesmoke;
+  padding         : 0.5em 1em;
+  font-size       : 1em;
+  border-radius   : 4px;
+}
+
+.success {
+  background-color: limegreen;
+}
+
+.failed {
+  background-color: #ff2222;
 }
 
 .header {
@@ -274,26 +316,26 @@ label {
   }
 }
 
-.header-logo{
-  width: 3.6em;
+.header-logo {
+  width : 3.6em;
   height: 3.6em;
 }
 
-.header-logo-container{
+.header-logo-container {
   display: table-cell;
-  float: left;
+  float  : left;
 }
 
-.header-text{
-  height: 2em;
-  display: table-cell;
+.header-text {
+  height        : 2em;
+  display       : table-cell;
   vertical-align: middle;
-  font-size: 1.8em;
-  padding-left: 0.3em;
+  font-size     : 1.8em;
+  padding-left  : 0.3em;
 }
 
 .page {
-  margin   : 0px auto;
+  margin   : 6em auto 0px auto;
   padding  : 0em 1em;
   max-width: 1024px;
   clear    : both;
@@ -344,27 +386,39 @@ form {
 
   input[type=number],
   input[type=checkbox],
-  input[type=text] {
+  input[type=text],
+  select {
     width     : 450px;
     max-width : 100%;
     box-sizing: border-box;
     padding   : 0.3em;
   }
 
-  input[type=checkbox] {
-    width : auto;
-    margin: 12px 0px;
-  }
-
-  select {
-    width     : 250px;
-    max-width : 100%;
+  input[type=password] {
+    width     : 400px;
+    max-width : 85%;
     box-sizing: border-box;
     padding   : 0.3em;
   }
 
-  .input_small {
-    width: 250px !important;
+  .input_password {
+    width     : 400px !important;
+    max-width : 85% !important;
+    box-sizing: border-box;
+    padding   : 0.3em;
+  }
+
+  input[type=checkbox] {
+    width : 1.2em;
+    height: 1.2em;
+    margin: 0.4em 0px;
+  }
+
+  .password-button {
+    padding : 0.4em;
+    position: relative;
+    top     : 0.7em;
+    left    : 0.2em;
   }
 }
 
@@ -479,30 +533,30 @@ form {
 }
 
 .modal {
-  position: fixed;
-  z-index: 999999;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
+  position       : fixed;
+  z-index        : 999999;
+  top            : 0;
+  left           : 0;
+  width          : 100vw;
+  height         : 100vh;
+  background     : rgba(0, 0, 0, 0.3);
+  display        : flex;
+  align-items    : center;
   justify-content: center;
 
   &>div:first-child {
-    background: white;
-    outline: none;
-    width: 30rem;
-    max-width: calc(100vw - 2rem);
-    max-height: calc(100vh - 2rem);
-    box-shadow: 0 0 34px 0 rgba(0, 0, 0, 0.24);
-    overflow-y: auto;
-    position: relative;
-    padding         : 1em;
-    border-radius   : 6px;
-    text-align      : center;
-    box-shadow      : 0px 0px 50px;
+    background   : white;
+    outline      : none;
+    width        : 30rem;
+    max-width    : calc(100vw - 2rem);
+    max-height   : calc(100vh - 2rem);
+    box-shadow   : 0 0 34px 0 rgba(0, 0, 0, 0.24);
+    overflow-y   : auto;
+    position     : relative;
+    padding      : 1em;
+    border-radius: 6px;
+    text-align   : center;
+    box-shadow   : 0px 0px 50px;
 
     &>p {
       margin-top: 0px;
@@ -533,6 +587,10 @@ form {
   &:hover {
     background-color: @cPrimaryHover;
   }
+}
+
+.multibutton {
+  margin-right: 0.4em;
 }
 
 .button-disabled {
@@ -577,4 +635,81 @@ form {
 
 .status-error {
   color: #cc0099;
+}
+
+.checkbox-label {
+  display     : block;
+  padding-left: 1em;
+  text-indent : -1em;
+}
+
+ul.breadcrumb {
+  padding         : 10px 16px;
+  list-style      : none;
+  background-color: #eee;
+}
+
+ul.breadcrumb li {
+  display  : inline;
+  font-size: 18px;
+}
+
+ul.breadcrumb li+li:before {
+  padding: 8px;
+  color  : black;
+  content: "/\00a0";
+}
+
+ul.breadcrumb li a {
+  color          : #0275d8;
+  text-decoration: none;
+}
+
+ul.breadcrumb li a:hover {
+  color          : #01447e;
+  text-decoration: underline;
+}
+
+.center {
+  margin : auto;
+  display: block;
+}
+
+.scrollable-container {
+  overflow-y: auto;
+  max-height: 14em;
+}
+
+.sticky {
+  position: fixed;
+  top     : 0;
+  width   : 100%
+}
+
+.status-item {
+  height: 3em;
+  width: 100%;
+  max-width: 450px;;
+  grid-template-columns: 2em 1fr 1.6em;
+  display: grid;
+  font-size: 1.2em;
+    & > div{
+      line-height: 3em;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+    }
+
+}
+
+.icon {
+  height: 1.5em;
+    width: 1.5em;
+}
+
+.icon-done {
+  color      : limegreen;
+  height: 1.3em;
+    width: 1.3em;
 }

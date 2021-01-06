@@ -1,7 +1,7 @@
 import React from "react";
 import styled, { createGlobalStyle, css } from "styled-components";
 import { normalize } from "styled-normalize";
-import { Loader, Menu as MenuIcon } from "react-feather";
+import { Loader, Menu as MenuIcon, Info, Eye, EyeOff } from "react-feather";
 import PropTypes from "prop-types";
 import MaskedInput from "react-text-mask";
 
@@ -24,7 +24,7 @@ Hamburger.propTypes = {
 };
 
 export const Header = ({ children }) => (
-    <div className="header">
+    <div className="header sticky">
         <div>{children}</div>
     </div>
 );
@@ -53,8 +53,8 @@ Card.propTypes = {
     children: PropTypes.any,
 };
 
-export const Menu = ({className,  children })=>(
-    <ul className={className}>{ children }</ul>
+export const Menu = ({ className, children }) => (
+    <ul className={className}>{children}</ul>
 );
 
 Menu.propTypes = {
@@ -67,8 +67,8 @@ export const Confirmation = ({ active, confirm, cancel, className, children }) =
         onClick={() => cancel()}>
         <div onClick={(e) => e.stopPropagation()}><p>{children}</p>
             <div>
-                <CancelButton title="Cancel" onClick={() => cancel()}/>
-                <Button title="Continue" onClick={() => confirm()}/>
+                <CancelButton title="Cancel" onClick={() => cancel()} />
+                <Button title="Continue" onClick={() => confirm()} />
             </div>
         </div>
     </div> : null
@@ -99,62 +99,67 @@ Alert.propTypes = {
     children: PropTypes.any,
 };
 
-export const Button=({name, title, onClick, isSubmit, isReset, isCancel, isDisabled, isRed})=>{
-    let className="button";
-    let type="button";
-    if(isSubmit){
-        type="submit";
-    }else if(isReset){
-        type="reset";
+export const Button = ({ name, title, onClick, isSubmit, isReset, isCancel, isDisabled, isRed, marginRight }) => {
+    let className = "button";
+    let type = "button";
+    if (isSubmit) {
+        type = "submit";
+    } else if (isReset) {
+        type = "reset";
     }
 
-    if(isDisabled){
-        className="button-disabled";
-        onClick=null;
+    if (isDisabled) {
+        className = "button-disabled";
+        onClick = null;
     }
 
-    if(isCancel){
-        className="button-cancel";        
+    if (isCancel) {
+        className = "button-cancel";
     }
 
-    if(isRed){
-        className="button-red"; 
+    if (isRed) {
+        className = "button-red";
     }
+
+    if (marginRight) {
+        className += " multibutton";
+    }
+
     return (<button name={name} className={className} type={type} onClick={onClick}>{title}</button>);
 }
 
-export const SubmitButton=({title, onClick, isDisabled=false})=>{
-    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isSubmit={true}/>;
+export const SubmitButton = ({ title, onClick, isDisabled = false }) => {
+    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isSubmit={true} />;
 }
 
-export const ResetButton=({title, onClick, isDisabled=false})=>{
-    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isReset={true}/>;
+export const ResetButton = ({ title, onClick, isDisabled = false }) => {
+    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isReset={true} />;
 }
 
 
-export const CancelButton=({title, onClick, isDisabled=false})=>{
+export const CancelButton = ({ title, onClick, isDisabled = false }) => {
     return <Button title={title} onClick={onClick} isDisabled={isDisabled} isCancel={true} />;
 }
 
 
-export const RedButton=({title, onClick, isDisabled=false})=>{
-    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isRed={true}/>;
+export const RedButton = ({ title, onClick, isDisabled = false }) => {
+    return <Button title={title} onClick={onClick} isDisabled={isDisabled} isRed={true} />;
 }
-    
-export const Spinner = ()=> (
-    <span className="spinner"><Loader/></span>
+
+export const Spinner = () => (
+    <span className="spinner"><Loader /></span>
 );
 
-export const Status=({type, text, showSpinner})=>(
+export const Status = ({ type, text, showSpinner }) => (
     <div className="status">
-        {showSpinner?
+        {showSpinner ?
             <div className="spinner-container" >
-                <Spinner/> 
+                <Spinner />
             </div> : null}
         <div >
             <span className={`status-${type}`}>{text}</span>
         </div>
-    </div>    
+    </div>
 )
 
 export function Fetch(props) {
@@ -190,15 +195,15 @@ Fetch.propTypes = {
     children: PropTypes.any,
 };
 
-var checkControlVisible=(control, state)=>{
-    if(control.hasOwnProperty("display_filter")){
+var checkControlVisible = (control, state) => {
+    if (control.hasOwnProperty("display_filter")) {
         return eval(control.display_filter);
     }
     return true;
 }
 
-export const IPv4 = (props) => { 
-    if(!checkControlVisible(props.control, props.state)){
+export const IPv4 = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
@@ -208,123 +213,287 @@ export const IPv4 = (props) => {
         mask: value => Array(value.length).fill(/[\d.]/),
         pipe: value => {
             if (value === '.' || value.endsWith('..')) return false;
-    
+
             const parts = value.split('.');
-    
+
             if (
                 parts.length > 4 ||
                 parts.some(part => part === '00' || part < 0 || part > 255)
             ) {
                 return false;
             }
-    
+
             return value;
         },
     };
 
-    let onChangeHandler=function(event){ 
-        let { value} = event.target;
-        let newState={};
-        newState[props.control.name]=value.trim();        
-        props.setState(newState);
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = value.trim();
+        props.onChangeValue(newState);
     };
 
-    let name=props.control.name;
+    let name = props.control.name;
     return (
         <p>
             <label htmlFor={name}>
-                <b>{props.control.label}</b>:
+                <b>{props.control.translation}</b>:
             </label>
-            <MaskedInput id={name} name={name} type="text" className="input_small"  {...ipProps}
-                                onChange={onChangeHandler} value={props.state[name]} />
+            <MaskedInput id={name} name={name} type="text" {...ipProps} onChange={onChangeHandler} value={props.state[name]} />
         </p>
     );
 }
 
-export const NumericInput = (props) => { 
-    if(!checkControlVisible(props.control, props.state)){
+export const Checkbox = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
-    let onChangeHandler=function(event){ 
-        let { value} = event.target;
-        let newState={};
-        newState[props.control.name]=Number(value);     
-        props.setState(newState);
+    let onChangeHandler = function (event) {
+        let { checked } = event.target;
+        let newState = {};
+        newState[props.control.name] = Number(checked);
+        props.onChangeValue(newState);
     };
 
-    let name=props.control.name;
-    let isReadOnly=false;
-    if(props.control.hasOwnProperty("read_only")){
-        isReadOnly=props.control.read_only;
+    let name = props.control.name;
+    let isReadOnly = false;
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
     }
     return (
         <p>
-            <label htmlFor={name}>
-                <b>{props.control.label}</b>:
+            <label for={name}>
+                <b>{props.control.translation}</b>
             </label>
-            <input id={name} name={name} type="text" className="input_small" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+            <input id={name} name={name} type="checkbox" onChange={onChangeHandler} value={1} checked={props.state[name]} readOnly={false} />
         </p>
     );
 }
 
-export const DNSName = (props) => { 
-    if(!checkControlVisible(props.control, props.state)){
+export const NumericInput = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
-    let onChangeHandler=function(event){ 
-        let { value} = event.target;
-        let newState={};
-        newState[props.control.name]=value.trim();
-        props.setState(newState);
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = Number(value);
+        props.onChangeValue(newState);
     };
 
-    let name=props.control.name;
-    let isReadOnly=false;
-    if(props.control.hasOwnProperty("read_only")){
-        isReadOnly=props.control.read_only;
+    let name = props.control.name;
+    let isReadOnly = false;
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
     }
     return (
         <p>
             <label htmlFor={name}>
-                <b>{props.control.label}</b>:
+                <b>{props.control.translation}</b>:
             </label>
-            <input id={name} name={name} type="text" className="input_small" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+            <input id={name} name={name} type="text" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
         </p>
     );
 }
 
-export const Select = (props ) => {
-    if(!checkControlVisible(props.control, props.state)){
+export const DNSName = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
-    let onChangeHandler=function(event){ 
-        let { value} = event.target;
-        let newState={};
-        newState[props.control.name]=Number(value);        
-        props.setState(newState);
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = value.trim();
+        props.onChangeValue(newState);
     };
 
-    let isReadOnly=false;
-    if(props.hasOwnProperty("isReadOnly")){
-        isReadOnly=props.isReadOnly;
+    let name = props.control.name;
+    let isReadOnly = false;
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
     }
-
-    let name=props.control.name;
     return (
         <p>
             <label htmlFor={name}>
-                <b>{props.control.label}</b>:
+                <b>{props.control.translation}</b>:
             </label>
+            <input id={name} name={name} type="text" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+        </p>
+    );
+}
+
+export const TextInput = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
+        return null;
+    }
+
+    let infoKeyName = `${name}_info`;
+
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = value.trim();
+        props.onChangeValue(newState);
+    };
+
+    let onInfo = function (event) {
+        let newState = {};
+        let isVisible = true;
+
+        if (props.state.hasOwnProperty(infoKeyName)) {
+            isVisible = !props.state[infoKeyName];
+        }
+        newState[infoKeyName] = isVisible;
+        props.onChangeValue(newState);
+    };
+
+    let name = props.control.name;
+    let isReadOnly = false;
+
+
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
+    }
+
+    let labelContent = <b>{props.control.translation}</b>;
+
+    let infoText = props.state[infoKeyName] ? <div>{props.control.translation_info}</div> : null;
+
+    if (props.showInfo) {
+        labelContent = <b>{props.control.translation} <Info onClick={onInfo} /></b>;
+    }
+
+    return (
+        <p>
+            <label htmlFor={name}>{labelContent}{infoText}</label>
+            <input id={name} name={name} type="text" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+        </p>
+    );
+}
+
+export const PasswordInput = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
+        return null;
+    }
+
+    let name = props.control.name;
+    let isReadOnly = false;
+
+    let passwordKeyName = `${name}_password`;
+    let infoKeyName = `${name}_info`;
+
+    let inputType = "password";
+
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = value.trim();
+        props.onChangeValue(newState);
+    };
+
+    let onInfo = function (event) {
+        let newState = {};
+        let isVisible = true;
+
+        if (props.state.hasOwnProperty(infoKeyName)) {
+            isVisible = !props.state[infoKeyName];
+        }
+        newState[infoKeyName] = isVisible;
+        props.onChangeValue(newState);
+    };
+
+    let onTogglePassword = function (event) {
+        let newState = {};
+        let isVisible = true;
+
+        if (props.state.hasOwnProperty(passwordKeyName)) {
+            isVisible = !props.state[passwordKeyName];
+        }
+        newState[passwordKeyName] = isVisible;
+        props.onChangeValue(newState);
+    };
+
+    let eyeButton = <Eye onClick={onTogglePassword} className="password-button" />;
+
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
+    }
+
+    let labelContent = <b>{props.control.translation}</b>;
+
+    let infoText = props.state[infoKeyName] ? <div>{props.control.translation_info}</div> : null;
+
+    if (props.showInfo) {
+        labelContent = <b>{props.control.translation} <Info onClick={onInfo} /></b>;
+    }
+
+    if (props.state[passwordKeyName]) {
+        inputType = "text";
+        eyeButton = <EyeOff onClick={onTogglePassword} className="password-button" />;
+    }
+
+    return (
+        <p>
+            <label htmlFor={name}>{labelContent}{infoText}</label>
+            <input id={name} name={name} type={inputType} className="input_password" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+            {eyeButton}
+        </p>
+    );
+}
+
+export const Select = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
+        return null;
+    }
+
+    let name = props.control.name;
+    let isReadOnly = false;
+    let infoKeyName = `${name}_info`;
+
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = Number(value);
+        props.onChangeValue(newState);
+    };
+
+    let onInfo = function (event) {
+        let newState = {};
+        let isVisible = true;
+
+        if (props.state.hasOwnProperty(infoKeyName)) {
+            isVisible = !props.state[infoKeyName];
+        }
+        newState[infoKeyName] = isVisible;
+        props.onChangeValue(newState);
+    };
+
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
+    }
+
+    let labelContent = <b>{props.i18n.get(props.control.label)}</b>;
+
+    let infoText = props.state[infoKeyName] ? <div>{props.control.translation_info}</div> : null;
+
+    if (props.showInfo) {
+        labelContent = <b>{props.control.translation} <Info onClick={onInfo} /></b>;
+    }
+
+    return (
+        <p>
+            <label htmlFor={name}>{labelContent}{infoText}</label>
             <select id={name} name={name} onChange={onChangeHandler} >
                 {
                     props.control.options.map((option) => {
                         let selected = (option.value === props.state[name]) ? "selected" : "";
-                        if(isReadOnly){
+                        if (isReadOnly) {
                             return selected ? <option value={option.value} selected={selected}>{option.text}</option> : null;
-                        }else{
+                        } else {
                             return <option value={option.value} selected={selected}>{option.text}</option>;
                         }
                     })
@@ -334,37 +503,61 @@ export const Select = (props ) => {
     );
 }
 
-export const OptGroupSelect = (props ) => {
-    if(!checkControlVisible(props.control, props.state)){
+export const OptGroupSelect = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
-    let onChangeHandler=function(event){ 
-        let { value} = event.target;
-        let newState={};
-        newState[props.control.name]=Number(value);        
-        props.setState(newState);
+    let name = props.control.name;
+    let isReadOnly = false;
+    let infoKeyName = `${name}_info`;
+
+    let onChangeHandler = function (event) {
+        let { value } = event.target;
+        let newState = {};
+        newState[props.control.name] = Number(value);
+        props.onChangeValue(newState);
     };
 
-    let name=props.control.name;
+    let onInfo = function (event) {
+        let newState = {};
+        let isVisible = true;
+
+        if (props.state.hasOwnProperty(infoKeyName)) {
+            isVisible = !props.state[infoKeyName];
+        }
+        newState[infoKeyName] = isVisible;
+        props.onChangeValue(newState);
+    };
+
+    if (props.control.hasOwnProperty("read_only")) {
+        isReadOnly = props.control.read_only;
+    }
+
+    let labelContent = <b>{props.control.translation}</b>;
+
+    let infoText = props.state[infoKeyName] ? <div>{props.control.translation_info}</div> : null;
+
+    if (props.showInfo) {
+        labelContent = <b>{props.control.translation} <Info onClick={onInfo} /></b>;
+    }
+
     return (
         <p>
-            <label htmlFor={name}>
-                <b>{props.control.label}</b>:
-            </label>
+            <label htmlFor={name}>{labelContent}{infoText}</label>
             <select id={name} name={name} onChange={onChangeHandler} >
                 {
                     props.control.optgroups.map((optgroup) => {
                         return (
-                                <optgroup label={optgroup.text}>
-                                    {
-                                        optgroup.options.map((option) => {
-                                            let selected = (option.value === props.state[name]) ? "selected" : "";
-                                            return <option value={option.value} selected={selected}>{option.text}</option>;
-                                        })
-                                    }
-                                </optgroup>
-                            );
+                            <optgroup label={optgroup.text}>
+                                {
+                                    optgroup.options.map((option) => {
+                                        let selected = (option.value === props.state[name]) ? "selected" : "";
+                                        return <option value={option.value} selected={selected}>{option.text}</option>;
+                                    })
+                                }
+                            </optgroup>
+                        );
                     })
                 }
             </select>
@@ -372,19 +565,43 @@ export const OptGroupSelect = (props ) => {
     );
 }
 
-export const WizardBox = ({ children })=>(
-    <div className={{textAlign: "center"}}>{ children }</div>
+export const TestStatus = (props) => {
+    let status = "success";
+    if (props.isFailed) {
+        status = "failed";
+    }
+
+    let statusValue = props.i18n.get(`${props.name}.${status}`);
+    if (props.value !== null) {
+        statusValue = props.i18n.get(`${props.name}.${status}`, [["{value}", props.value]]);
+    }
+
+    return (
+        <p>
+            <div className="status-label">{props.i18n.get(props.name)}</div>
+            <div className={`status ${status}`}>{statusValue}</div>
+            {props.isFailed ?
+                <div className="status-hint">{props.i18n.get(`${props.name}.${status}.hint`)}</div>
+                : null
+            }
+
+        </p>
+    );
+}
+
+export const WizardBox = ({ children }) => (
+    <div className={{ textAlign: "center" }}>{children}</div>
 )
 
 export const Wizard = ({ children }) => (
-    <div className="wizard flex">{ children }</div>
+    <div className="wizard flex">{children}</div>
 )
 
-export const Flex=({ children })=>(
-    <div className="flex">{ children }</div>
+export const Flex = ({ children }) => (
+    <div className="flex">{children}</div>
 )
 
 
-export const Form=({ children })=>(
-    <form>{ children }</form>
+export const Form = ({ children }) => (
+    <form>{children}</form>
 )

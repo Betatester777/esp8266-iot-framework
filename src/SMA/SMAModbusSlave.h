@@ -5,18 +5,18 @@
 #include <ESP8266WiFi.h>
 #include <SMA/SMARequest.h>
 #include <SMA/SMAResponse.h>
+#include "ArduinoJson.h"
 
 class SMAModbusSlave
 {
 public:
-  SMAModbusSlave(String serverHost, uint16_t serverPort, uint32_t requestInterval, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue));
+  SMAModbusSlave(String serverHost, uint16_t serverPort, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue));
   ~SMAModbusSlave();
-  void setRequestInterval(uint32_t _requestInterval);
   void setHostAndPort(String serverHost, uint16_t serverPort);
   int getValue();
-  bool getIsEnabled();
   static bool doConnect;
   int _readRegister();
+  String _runTest();
 
 private:
   WiFiClient *client;

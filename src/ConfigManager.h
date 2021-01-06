@@ -1,37 +1,61 @@
-#ifndef __CONFIGMGR_H__
-#define __CONFIGMGR_H__
+#ifndef __CONFIG_MGR_H__
+#define __CONFIG_MGR_H__
 
 #include "IPAddress.h"
+#include "ArduinoJson.h"
 #include <generated/config.h>
 
 //data that needs to be persisted for other parts of the framework
 
-#define SIZE_INTERNAL 32 //allocate 32 bytes to have room for future expansion
+#define SIZE_DEVICE_INFO 32 //allocate 32 bytes to have room for future expansion
 
-struct internalData
+#define SCOPE_LEGAL 0x01
+#define SCOPE_WIFI 0x02
+#define SCOPE_TIME 0x04
+#define SCOPE_SERVER 0x08
+#define SCOPE_SERVER_TEST 0x10
+#define SCOPE_TIMER 0x20
+#define SCOPE_SETTINGS 0x40
+
+struct DeviceInfo
 {
-    uint32_t ip;
-    uint32_t gw;
-    uint32_t sub;
-    uint32_t dns;
+    uint32_t serialNumber;
 };
 
-class config
+
+
+class ConfigManager
 {
 
 public:
-    configData data;
-    internalData internal;
-    bool begin(int numBytes = 512);
-    void saveRaw(uint8_t bytes[]);
-    void saveExternal(configData *extData);
-    void save();
-    void reset();
+    LegalConfig legal;
+    WifiConfig wifi;
+    TimeConfig time;
+    ServerConfig server;
+    ServerTestConfig server_test;
+    TimerConfig timer;
+    Settings settings;
 
+    String setupSsid;
+    String setupPassword;
+
+    bool testConnection;
+    String testConnectionResult;
+
+    bool begin(int numBytes = 512);
+    String getDeviceName();
+    int save(uint8_t scope);
+    void reset(uint8_t scope);
+    String getSetupStatusJSONString();
+    String getJSONString(uint8_t scope);
+    int setJSONString(uint8_t scope, String config);
+    String converIPv4ToString(uint32_t ip);
+    uint32_t converStringToIPv4(String ipString);
 private:
+    DeviceInfo _deviceInfo;
     uint8_t checksum(uint8_t *byteArray, unsigned long length);
 };
 
-extern config configManager;
+extern ConfigManager configManager;
 
 #endif

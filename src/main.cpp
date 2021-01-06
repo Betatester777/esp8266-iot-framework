@@ -19,11 +19,11 @@ void onPowerChanged(uint32_t oldValue, uint32_t newValue)
   measuredPower = newValue;
   Serial.println("Power measured: " + String(measuredPower));
 
-  if (measuredPower > configManager.data.powerThresholdHigh)
+  if (measuredPower > configManager.settings.powerThresholdHigh)
   {
     fsmOperationMode->trigger(TRIGGER_POWER_HIGH);
   }
-  if (measuredPower < configManager.data.powerThresholdLow)
+  if (measuredPower < configManager.settings.powerThresholdLow)
   {
     fsmOperationMode->trigger(TRIGGER_POWER_LOW);
   }
@@ -42,8 +42,8 @@ void onButtonEvent(int event)
     break;
   case ShortPressConfirm:
     Serial.println("ButtonEvent [ShortPressConfirm]");
-      statusLEDController.start(Short);
-        fsmOperationMode->trigger(TRIGGER_TOGGLE_ON_OFF);
+    statusLEDController.start(Short);
+    fsmOperationMode->trigger(TRIGGER_TOGGLE_ON_OFF);
     break;
   case ShortPressConfirm_x2:
     Serial.println("ButtonEvent [ShortPressConfirm_x2]");
@@ -51,7 +51,7 @@ void onButtonEvent(int event)
     break;
   case ShortPressConfirm_x3:
     Serial.println("ButtonEvent [ShortPressConfirm_x3]");
-statusLEDController.start(Short_x3);
+    statusLEDController.start(Short_x3);
     break;
   case ShortPressConfirm_x4:
     Serial.println("ButtonEvent [ShortPressConfirm_x4]");
@@ -67,7 +67,7 @@ statusLEDController.start(Short_x3);
     break;
   case LongPressConfirm:
     Serial.println("ButtonEvent [LongPressConfirm]");
-     fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
+    fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
     break;
   case ConstantPressDetect:
     Serial.println("ButtonEvent [ConstantPressDetect]");
@@ -75,6 +75,8 @@ statusLEDController.start(Short_x3);
     break;
   case ConstantPressConfirm:
     Serial.println("ButtonEvent [ConstantPressConfirm]");
+    Serial.println("Factory reset...");
+    configManager.reset(SCOPE_LEGAL | SCOPE_WIFI | SCOPE_SERVER | SCOPE_SERVER_TEST | SCOPE_TIME | SCOPE_TIMER | SCOPE_SETTINGS);
     break;
   }
 }
@@ -91,23 +93,16 @@ void setup()
   configManager.begin();
 
   //Create device ID from serial number
-  String serialNumberString = String(configManager.data.serialNumber);
-  String deviceName = String(configManager.data.serialNumber);
-  deviceName = String(PRODUCT_NAME) + "-" + deviceName.substring(deviceName.length() - 3);
-  WiFiManager.begin(deviceName);
+
+  String deviceName = configManager.getDeviceName();
+  wifiManager.begin(deviceName);
   timeSync.begin();
   fsm_setup();
   pushButtonHandler.begin(ButtonPin, ButtonMode, &onButtonEvent);
   statusLEDController.begin(LEDPinSwitch, true);
 
-  serverHost = String(configManager.data.serverIp);
-  if (configManager.data.serverAddressType == 1)
-  {
-    serverHost = String(configManager.data.serverDNS);
-  }
-  smaModbusSlave = new SMAModbusSlave(serverHost,
-                                      configManager.data.serverPort,
-                                      0,
+  smaModbusSlave = new SMAModbusSlave(String(configManager.server.serverHost),
+                                      configManager.server.serverPort,
                                       30775,
                                       2,
                                       &onPowerChanged);
@@ -116,31 +111,34 @@ void setup()
 void loop()
 {
   //software interrupts
-  WiFiManager.loop();
+  wifiManager.loop();
   updater.loop();
   pushButtonHandler.loop();
   statusLEDController.loop();
   fsmOperationMode->loop();
-  modbusRequestDelay = configManager.data.measureInterval * 1000;
-  if (millis() >= (modbusRequestTimer + modbusRequestDelay) && modbusRequestDelay > 0)
+  modbusRequestDelay = configManager.server.measureInterval * 1000;
+
+  if (configManager.testConnection)
+  {
+    Serial.println("Run connection test");
+    smaModbusSlave->setHostAndPort(configManager.server.serverHost, configManager.server.serverPort);
+    configManager.testConnectionResult = smaModbusSlave->_runTest();
+    Serial.println("Test result=" + configManager.testConnectionResult);
+    configManager.testConnection = false;
+    auto callback = serverConnectionTestQueue.back();
+    callback();
+  }
+  else if (millis() >= (modbusRequestTimer + modbusRequestDelay) && modbusRequestDelay > 0)
   {
     modbusRequestTimer += modbusRequestDelay;
     String stateKey = fsmOperationMode->get_current_state_key();
     if (stateKey == POWER_OFF || stateKey == POWER_ON)
     {
-
-      if (configManager.data.serverAddressType == SERVER_ADDRESS_TYPE_DNS)
-      {
-        smaModbusSlave->setHostAndPort(configManager.data.serverDNS, configManager.data.serverPort);
-      }
-      else
-      {
-        smaModbusSlave->setHostAndPort(configManager.data.serverIp, configManager.data.serverPort);
-      }
+      smaModbusSlave->setHostAndPort(configManager.server.serverHost, configManager.server.serverPort);
 
       smaModbusSlave->_readRegister();
 
-      if (configManager.data.enableStatusLED)
+      if (configManager.settings.enableStatusLED)
       {
         statusLEDController.start(Short);
       }

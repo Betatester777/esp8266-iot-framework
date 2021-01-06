@@ -3,12 +3,12 @@
 #include <ConfigManager.h>
 
 //create global object
-WifiManager WiFiManager;
+WifiManager wifiManager;
 
 //function to call in setup
 void WifiManager::begin(String deviceName)
 {
-    captivePortalName= deviceName;
+    captivePortalName = deviceName;
 
     mDNSName = deviceName;
     mDNSName.toLowerCase();
@@ -17,10 +17,10 @@ void WifiManager::begin(String deviceName)
     WiFi.hostname(deviceName);
 
     //set static IP if entered
-    ip = IPAddress(configManager.internal.ip);
-    gw = IPAddress(configManager.internal.gw);
-    sub = IPAddress(configManager.internal.sub);
-    dns = IPAddress(configManager.internal.dns);
+    ip = IPAddress(configManager.wifi.fixedIp);
+    gw = IPAddress(configManager.wifi.gatewayIp);
+    sub = IPAddress(configManager.wifi.subnetMask);
+    dns = IPAddress(configManager.wifi.dnsServerIp);
 
     if (ip.isSet() || gw.isSet() || sub.isSet() || dns.isSet())
     {
@@ -52,11 +52,14 @@ void WifiManager::begin(String deviceName)
     startMDNS();
 }
 
-void WifiManager::startMDNS(){
+void WifiManager::startMDNS()
+{
+    MDNS.close();
+
     if (MDNS.begin(mDNSName))
     {
         Serial.println(F("mDNS is running: "));
-        Serial.printf("http://%s.local", mDNSName.c_str());
+        Serial.printf("http://%s.local\n", mDNSName.c_str());
     }
     else
     {
@@ -75,35 +78,45 @@ void WifiManager::forget()
     sub = IPAddress();
     gw = IPAddress();
     dns = IPAddress();
-
-    //make EEPROM empty
-    storeToEEPROM();
-
     Serial.println(PSTR("Requested to forget WiFi. Started Captive portal."));
 }
 
 //function to request a connection to new WiFi credentials
 void WifiManager::setNewWifi(String newSSID, String newPass)
 {
+    setNewWifi(newSSID, newPass, true, 0, 0, 0, 0);
+}
+
+//function to request a connection to new WiFi credentials
+void WifiManager::setNewWifi(String newSSID, String newPass, bool useDHCP, uint32_t newIp, uint32_t newSub, uint32_t newGw, uint32_t newDns)
+{
     ssid = newSSID;
     pass = newPass;
+
     ip = IPAddress();
     sub = IPAddress();
     gw = IPAddress();
     dns = IPAddress();
 
-    reconnect = true;
-}
+    if (newIp > 0)
+    {
+        ip = IPAddress(newIp);
+    }
 
-//function to request a connection to new WiFi credentials
-void WifiManager::setNewWifi(String newSSID, String newPass, String newIp, String newSub, String newGw, String newDns)
-{
-    ssid = newSSID;
-    pass = newPass;
-    ip.fromString(newIp);
-    sub.fromString(newSub);
-    gw.fromString(newGw);
-    dns.fromString(newDns);
+    if (newSub > 0)
+    {
+        sub = IPAddress(newSub);
+    }
+
+    if (newGw > 0)
+    {
+        gw = IPAddress(newGw);
+    }
+
+    if (newDns > 0)
+    {
+        dns = IPAddress(newDns);
+    }
 
     reconnect = true;
 }
@@ -113,11 +126,13 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
 {
     delay(1000);
 
+    Serial.println("WIFI connect [ssid=" + newSSID + ", password=" + newPass + "]");
     //set static IP or zeros if undefined
+
     WiFi.config(ip, gw, sub, dns);
 
     //fix for auto connect racing issue
-    if (!(WiFi.status() == WL_CONNECTED && (WiFi.SSID() == newSSID)) || ip.v4() != configManager.internal.ip)
+    if (!(WiFi.status() == WL_CONNECTED && (WiFi.SSID() == newSSID)) || ip.v4() != configManager.wifi.fixedIp)
     {
         //trying to fix connection in progress hanging
         ETS_UART_INTR_DISABLE();
@@ -148,11 +163,7 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
                     Serial.println(PSTR("Reconnection successful"));
                     Serial.println(WiFi.localIP());
                 }
-
-                startMDNS();
             }
-
-            
         }
         else
         {
@@ -164,11 +175,8 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
             Serial.println(PSTR("New connection successful"));
             Serial.println(WiFi.localIP());
 
-            //store IP address in EEProm
-            storeToEEPROM();
+            startMDNS();
         }
-
-
     }
 }
 
@@ -191,9 +199,6 @@ void WifiManager::startCaptivePortal(String apName)
 
     Serial.println(PSTR("Opened a captive portal"));
     Serial.println(PSTR("192.168.4.1"));
-    
-    delay(2000);
-    startMDNS();
     inCaptivePortal = true;
 }
 
@@ -218,6 +223,40 @@ String WifiManager::SSID()
     return WiFi.SSID();
 }
 
+String WifiManager::scanNetworks()
+{
+    String json = "[";
+    int n = WiFi.scanComplete();
+    if (n == -2)
+    {
+        WiFi.scanNetworks(true);
+    }
+    else if (n)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            if (i)
+                json += ",";
+            json += "{";
+            json += "\"rssi\":" + String(WiFi.RSSI(i));
+            json += ",\"ssid\":\"" + WiFi.SSID(i) + "\"";
+            json += ",\"bssid\":\"" + WiFi.BSSIDstr(i) + "\"";
+            json += ",\"channel\":" + String(WiFi.channel(i));
+            json += ",\"secure\":" + String(WiFi.encryptionType(i));
+            json += ",\"hidden\":" + String(WiFi.isHidden(i) ? "true" : "false");
+            json += "}";
+        }
+        WiFi.scanDelete();
+        if (WiFi.scanComplete() == -2)
+        {
+            WiFi.scanNetworks(true);
+        }
+    }
+    json += "]";
+
+    return json;
+}
+
 //captive portal loop
 void WifiManager::loop()
 {
@@ -234,14 +273,4 @@ void WifiManager::loop()
     }
 
     MDNS.update();
-}
-
-//update IP address in EEPROM
-void WifiManager::storeToEEPROM()
-{
-    configManager.internal.ip = ip.v4();
-    configManager.internal.sub = sub.v4();
-    configManager.internal.gw = gw.v4();
-    configManager.internal.dns = dns.v4();
-    configManager.save();
 }

@@ -22,7 +22,6 @@ private:
     void startCaptivePortal(String apName);
     void stopCaptivePortal();
     void connectNewWifi(String newSSID, String newPass);
-    void storeToEEPROM();
     void startMDNS();
 public:
     void begin(String apName);
@@ -31,9 +30,10 @@ public:
     bool isCaptivePortal();
     String SSID();
     void setNewWifi(String newSSID, String newPass);
-    void setNewWifi(String newSSID, String newPass, String newIp, String newSub, String newGw, String newDns);
+    void setNewWifi(String newSSID, String newPass, bool useDHCP, uint32_t newIp, uint32_t newSub, uint32_t newGw, uint32_t newDns);
+    String scanNetworks();
 };
 
-extern WifiManager WiFiManager;
+extern WifiManager wifiManager;
 
 #endif

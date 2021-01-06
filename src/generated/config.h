@@ -8,30 +8,109 @@
 #define LEDPinSwitch 13
 #define LEDPinPow 15
 #define ButtonPin 0
-#define KeyBounce 50 
+#define KeyBounce 50
 #define ButtonShortPressDuration 200
 #define ButtonLongPressDuration 400
 #define ButtonConstantPressDuration 10000
 #define ButtonIdleDuration 500
-#define FacroryResetDetectionStart 3000
 #define ButtonMode INPUT_PULLUP
 
-struct configData
+#define MONDAY 0x01
+#define TUESDAY 0x02
+#define WEDNESDAY 0x04
+#define THURSDAY 0x08
+#define FRIDAY 0x10
+#define SATURDAY 0x20
+#define DAY_OF_WEEK_SUNDAY 0x40
+
+enum ProtectionType
 {
-	uint32_t serialNumber;
-	uint8_t useNTP;
+	NONE,
+	CREDENTIALS,
+	HARDWARE
+};
+
+#include <sstream>
+
+template <typename T>
+std::string tostring(const T &t)
+{
+	std::ostringstream ss;
+	ss << t;
+	return ss.str();
+}
+
+struct TimerItem
+{
+	bool isEnabled;
+	bool status; //True=HIGH, false=LOW
+	uint16_t beginDayOfYear;
+	uint16_t endDayOfYear;
+	uint8_t daysOfWeek;
+	uint16_t beginTime;
+	uint16_t endTime;
+};
+struct LegalConfig
+{
+	bool isComplete;
+	bool userAgreementAccepted;
+	char countryCode[3];
+};
+struct WifiConfig
+{
+	bool isComplete;
+	bool useDHCP;
+	uint32_t fixedIp;
+	uint32_t gatewayIp;
+	uint32_t subnetMask;
+	uint32_t dnsServerIp;
+};
+
+struct TimeConfig
+{
+	bool isComplete;
+	char timeZone[6];
+	bool enableDaylightSavingTime;
+	bool useNTP;
+	char ntpServer[100];
+};
+struct ServerConfig
+{
+	bool isComplete;
+	uint32_t serverProductId;
+	char serverHost[255];
+	uint16_t serverPort;
+	uint32_t measureInterval;
+};
+
+struct ServerTestConfig
+{
+	bool isComplete;
+};
+
+struct TimerConfig
+{
+	bool isComplete;
+	TimerItem timers[5];
+};
+struct Settings
+{
+	bool isComplete;
+	uint8_t configurationProtectionType;
 	uint8_t operationMode;
-	uint16_t serverProductId;
-	uint8_t serverAddressType;
-	char serverIp[15];
-	char serverDNS[255];
-	uint16_t serverPort; 
+	bool enableStatusLED;
 	uint32_t powerThresholdHigh;
 	uint32_t powerThresholdLow;
-	uint32_t measureInterval;
-	uint8_t enableStatusLED;
+	uint32_t maximalDailyDurationHigh;
 };
 
 extern uint32_t configVersion;
-extern const configData defaults;
+extern const LegalConfig legalDefaults;
+extern const WifiConfig wifiDefaults;
+extern const TimeConfig timeDefaults;
+extern const ServerConfig serverDefaults;
+extern const ServerTestConfig serverTestDefaults;
+extern const TimerConfig timerDefaults;
+extern const Settings settingsDefaults;
+
 #endif
