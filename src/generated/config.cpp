@@ -17,6 +17,10 @@ const WifiConfig wifiDefaults PROGMEM = {
 		0			 //DNS server IP
 };
 
+const WifiTestConfig wifiTestDefaults PROGMEM = {
+		false //isComplete
+};
+
 const TimeConfig timeDefaults PROGMEM = {
 		false,				 //isComplete
 		"CEST",				 //Time zone abbreviation

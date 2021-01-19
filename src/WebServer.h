@@ -16,16 +16,21 @@
 #include <queue>
 class WebServer
 {
-private:    
-    AsyncWebServer server = AsyncWebServer(80);    
+private:
     static void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
-    static void serveProgmem(AsyncWebServerRequest *request);
     void bindAll();
     uint8_t desiredOutputStatus;
     String status2json();
+
+protected:
+    AsyncWebServer *server;
+    AsyncWebSocket *ws;
+    void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
+    void handleWebSocketMessage(AsyncWebSocketClient *client, void *arg, uint8_t *data, size_t len);
+
 public:
-    AsyncWebSocket ws = AsyncWebSocket("/ws");
     void begin();
+    void publishStatus();
 };
 
 extern WebServer GUI;

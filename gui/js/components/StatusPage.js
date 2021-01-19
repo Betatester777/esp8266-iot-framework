@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Form, Button, Spinner, NumericInput } from "./UiComponents";
-import { Wifi, CheckSquare, Server, Sliders, Zap, Check } from "react-feather";
+import { Form, Button, Spinner, OnOffControll , SelectDisplay, ValueDisplay} from "./UiComponents";
+import { Check } from "react-feather";
 
 export default class StatusPage extends React.Component {
     constructor(props) {
@@ -11,8 +11,14 @@ export default class StatusPage extends React.Component {
     }
 
     onChangeValue = (newState) => {
-        console.info(`Value changed: [${JSON.stringify(newState)}]`);
-        this.props.context.setState(newState);
+        console.info(`Value changed: [${JSON.stringify(newState)}]`, newState["outputStatus"]!=this.props.context.state["outputStatus"]);
+
+        if(newState.hasOwnProperty("operationMode")){
+            this.props.context.setOperationMode(newState["operationMode"]);
+        }else if(newState.hasOwnProperty("outputStatus")){
+            this.props.context.setOutputStatus(newState["outputStatus"]);
+        }
+      
     }
 
     render() {
@@ -29,62 +35,13 @@ export default class StatusPage extends React.Component {
 
             content = <div>
                 <h2>{this.i18n.get("status.content.title")}</h2>
-                <div className="status-item">
-                    <div>
-                        <CheckSquare className="icon" />
-                    </div>
-                    <div>
-                        Nutzungsvereinbarung
-                    </div>
-                    <div>
-                        <Check className="icon-done" />
-                    </div>
-                </div>
-                <div className="status-item">
-                    <div>
-                        <Wifi className="icon" />
-                    </div>
-                    <div>
-                        WLAN-Konfiguration
-                    </div>
-                    <div>
-                        <Check className="icon-done" />
-                    </div>
-                </div>
-                <div className="status-item">
-                    <div>
-                        <Server className="icon" />
-                    </div>
-                    <div>
-                        Inverter-Verbindung
-                    </div>
-                    <div>
-                        <Check className="icon-done" />
-                    </div>
-                </div>
-                <div className="status-item">
-                    <div>
-                        <Zap className="icon" />
-                    </div>
-                    <div>
-                        Verbindungstest
-                    </div>
-                    <div>
-                        <Check className="icon-done" />
-                    </div>
-                </div>
-                <div className="status-item">
-                    <div>
-                        <Sliders className="icon" />
-                    </div>
-                    <div>
-                        Einschaltkriterien
-                    </div>
-                    <div>
-                        <Check className="icon-done" />
-                    </div>
-                </div>
-
+                <SelectDisplay control={this.controls.operationMode} i18n={this.i18n} state={apiState} onChangeValue={this.onChangeValue}  /> 
+                <OnOffControll control={this.controls.outputStatus} state={apiState} onChangeValue={this.onChangeValue}
+                    onTranslation={this.i18n.get("common.value.on")} offTranslation={this.i18n.get("common.value.off")} isReadOnly={apiState.operationMode!==0} />
+                {apiState.operationMode==1 ? 
+                <ValueDisplay name="status.control.measured_power" i18n={this.i18n} value={apiState.measuredPower} isDisabled={apiState.operationMode!==1} />
+                :
+                null}
             </div>
         }
 

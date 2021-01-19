@@ -11,9 +11,6 @@
 #include <StatusLEDController.h>
 #include <SMA/SMAModbusSlave.h>
 
-unsigned long modbusRequestDelay;
-unsigned long modbusRequestTimer;
-
 void onPowerChanged(uint32_t oldValue, uint32_t newValue)
 {
   measuredPower = newValue;
@@ -42,7 +39,6 @@ void onButtonEvent(int event)
     break;
   case ShortPressConfirm:
     Serial.println("ButtonEvent [ShortPressConfirm]");
-    statusLEDController.start(Short);
     fsmOperationMode->trigger(TRIGGER_TOGGLE_ON_OFF);
     break;
   case ShortPressConfirm_x2:
@@ -68,6 +64,7 @@ void onButtonEvent(int event)
   case LongPressConfirm:
     Serial.println("ButtonEvent [LongPressConfirm]");
     fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
+    smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
     break;
   case ConstantPressDetect:
     Serial.println("ButtonEvent [ConstantPressDetect]");
@@ -76,18 +73,16 @@ void onButtonEvent(int event)
   case ConstantPressConfirm:
     Serial.println("ButtonEvent [ConstantPressConfirm]");
     Serial.println("Factory reset...");
-    configManager.reset(SCOPE_LEGAL | SCOPE_WIFI | SCOPE_SERVER | SCOPE_SERVER_TEST | SCOPE_TIME | SCOPE_TIMER | SCOPE_SETTINGS);
+    configManager.reset(SCOPE_LEGAL | SCOPE_WIFI | SCOPE_WIFI_TEST | SCOPE_SERVER | SCOPE_SERVER_TEST | SCOPE_TIME | SCOPE_TIMER | SCOPE_SETTINGS);
     break;
   }
 }
 
-SMAModbusSlave *smaModbusSlave;
 String serverHost;
 
 void setup()
 {
   Serial.begin(115200);
-  modbusRequestTimer = 0;
   LittleFS.begin();
   GUI.begin();
   configManager.begin();
@@ -106,6 +101,7 @@ void setup()
                                       30775,
                                       2,
                                       &onPowerChanged);
+  smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
 }
 
 void loop()
@@ -116,7 +112,6 @@ void loop()
   pushButtonHandler.loop();
   statusLEDController.loop();
   fsmOperationMode->loop();
-  modbusRequestDelay = configManager.server.measureInterval * 1000;
 
   if (configManager.testConnection)
   {
@@ -128,9 +123,9 @@ void loop()
     auto callback = serverConnectionTestQueue.back();
     callback();
   }
-  else if (millis() >= (modbusRequestTimer + modbusRequestDelay) && modbusRequestDelay > 0)
+  else if (smaModbusSlave->isTimerExpired())
   {
-    modbusRequestTimer += modbusRequestDelay;
+    smaModbusSlave->startTimer(configManager.server.measureInterval * 1000);
     String stateKey = fsmOperationMode->get_current_state_key();
     if (stateKey == POWER_OFF || stateKey == POWER_ON)
     {
@@ -142,6 +137,7 @@ void loop()
       {
         statusLEDController.start(Short);
       }
+
     }
   }
 

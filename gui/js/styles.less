@@ -425,9 +425,9 @@ form {
 .status {
   &>.spinner-container {
     float  : left;
-    width  : 1.6em;
-    height : 1.6em;
-    padding: 0em 0.4em 0em 0.4em;
+    width  : 48px;
+    height : 48px;
+    padding: 0em;
   }
 }
 
@@ -437,8 +437,9 @@ form {
   animation-duration       : 3000ms;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
-  width                    : 1.6em;
-  height                   : 1.6em;
+  width  : 48px;
+  height : 48px;
+  padding: 0em;
 
   @keyframes spin {
     from {
@@ -687,29 +688,184 @@ ul.breadcrumb li a:hover {
 }
 
 .status-item {
-  height: 3em;
-  width: 100%;
-  max-width: 450px;;
+  height   : 3em;
+  width    : 100%;
+  max-width: 450px;
+  ;
   grid-template-columns: 2em 1fr 1.6em;
-  display: grid;
-  font-size: 1.2em;
-    & > div{
-      line-height: 3em;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-align-items: center;
-      align-items: center;
-    }
+  display              : grid;
+  font-size            : 1.2em;
+
+  &>div {
+    line-height        : 3em;
+    display            : -webkit-flex;
+    display            : flex;
+    -webkit-align-items: center;
+    align-items        : center;
+  }
 
 }
 
 .icon {
   height: 1.5em;
-    width: 1.5em;
+  width : 1.5em;
 }
 
 .icon-done {
-  color      : limegreen;
+  color : limegreen;
   height: 1.3em;
-    width: 1.3em;
+  width : 1.3em;
 }
+
+.icon-edit {
+  color : rgb(50, 122, 205);
+  height: 1.3em;
+  width : 1.3em;
+}
+
+.icon-edit-button {
+  border       : solid 2px rgba(50, 122, 205, 0.404);
+  border-radius: 4px;
+  ;
+  height             : 1.5em;
+  width              : 1.5em;
+  display            : -webkit-flex;
+  display            : flex;
+  -webkit-align-items: center;
+  align-items        : center;
+}
+
+.status-display-label {
+  @media (max-width: 760px) {
+    display  : block !important;
+    max-width: initial !important;
+  }
+
+  font-size    : 1.2em;
+  display      : inline-block;
+  min-width    : 250px;
+  max-width    : 250px;
+  padding-right: 1em;
+  margin-bottom: 0.6em;
+}
+
+.status-button {
+  color        : white;
+  font-weight  : bold;
+  border-radius: 4px;
+  width        : 6em !important;
+  float        : left;
+  text-align   : center;
+  padding      : 0.5em;
+}
+
+.status-button-on {
+  .status-button();
+  background-color: #0055ff;
+  border          : solid 1px #0145cc;
+}
+
+.status-button-off {
+  .status-button();
+  background-color:  #ff00cc;
+  border          : solid 1px  #c4009c;
+}
+
+.status-button-disabled{
+  .status-button();
+  background-color: rgb(204, 204, 204);
+  border          : solid 1px rgb(158, 158, 158);
+  color: rgb(182, 182, 182);
+}
+
+.status-indicator{
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  margin-right : 2em;
+  float        : left;
+}
+
+.status-indicator-on{
+  .status-indicator();
+  background: radial-gradient(#ffffff, #7982ff);
+  border: solid 2px #646ffc;
+}
+
+.status-indicator-off{
+  .status-indicator();
+  background: radial-gradient(#ffffff, #b8b8b8);
+  border: solid 2px #858585;
+}
+
+.value-display {
+  font-weight  : bold;
+  width        : 100%;
+  max-width    : 450px;
+  box-sizing   : border-box;
+  text-align   : center;
+  border-radius: 4px;
+  padding      : 0.5em 1em 0.5em 1em;
+  border       : none;
+  font-size    : 1.5em;
+  margin       : 0.2em auto 1em auto;
+  background-color: white;
+  border: solid 2px  rgb(85, 241, 85);
+  margin-left: 0;
+}
+
+.value-display-disabled{
+  .value-display();
+  border: solid 2px  rgb(145, 145, 145) !important;
+  color: rgb(145, 145, 145);
+}
+
+.status-row{
+
+}
+
+.select-display-button{
+  font-weight  : bold;
+  color        : white;
+  width        : 100%;
+  max-width    : 450px;
+  box-sizing   : border-box;
+  text-align   : center;
+  border-radius: 4px;
+  padding      : 0.5em 1em 0.5em 1em;
+  margin: 0.5em 0em 0.5em 0em;
+  background-color: #0055ff;
+  border          : solid 1px #0145cc;
+}
+
+.select-display-button-active{
+  .select-display-button();
+  background-color: #9bbaf7;
+  border          : solid 1px #0145cc;
+
+}
+
+.button-icon{
+  font-weight: bold;
+}
+
+.hv-center{
+  position: absolute;
+    left: 50%;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.h-center-align{
+  display: table;
+  margin: 0 auto;
+}
+
+input.invalid:focus {
+  box-shadow: 0 0 8px rgb(255, 0, 0);
+  border: 1px solid rgb(255, 0, 0);
+}
+
+
+

@@ -3,6 +3,7 @@
 
 #include "IPAddress.h"
 #include "ArduinoJson.h"
+#include "WebServer.h"
 #include <generated/config.h>
 
 //data that needs to be persisted for other parts of the framework
@@ -11,11 +12,12 @@
 
 #define SCOPE_LEGAL 0x01
 #define SCOPE_WIFI 0x02
-#define SCOPE_TIME 0x04
-#define SCOPE_SERVER 0x08
-#define SCOPE_SERVER_TEST 0x10
-#define SCOPE_TIMER 0x20
-#define SCOPE_SETTINGS 0x40
+#define SCOPE_WIFI_TEST 0x04
+#define SCOPE_TIME 0x08
+#define SCOPE_SERVER 0x10
+#define SCOPE_SERVER_TEST 0x20
+#define SCOPE_TIMER 0x40
+#define SCOPE_SETTINGS 0x80
 
 struct DeviceInfo
 {
@@ -30,6 +32,7 @@ class ConfigManager
 public:
     LegalConfig legal;
     WifiConfig wifi;
+    WifiTestConfig wifi_test;
     TimeConfig time;
     ServerConfig server;
     ServerTestConfig server_test;
@@ -46,7 +49,7 @@ public:
     String getDeviceName();
     int save(uint8_t scope);
     void reset(uint8_t scope);
-    String getSetupStatusJSONString();
+    uint8_t setPreviousSetupScope();
     String getJSONString(uint8_t scope);
     int setJSONString(uint8_t scope, String config);
     String converIPv4ToString(uint32_t ip);

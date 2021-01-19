@@ -1,54 +1,38 @@
 [
     {
-        "name": "useNTP",
-        "label": "Enable NTP",
-        "type": "uint8_t",
-        "ui_control":"select",
-        "value": 0,       
-        "options":[
-            {"text": "OFF", "value": 0},
-            {"text": "ON", "value": 1}
-        ]
-
+        "name": "userAgreementAccepted",
+        "label": "setup.legal.control.accept",
+        "type": "bool",
+        "ui_control":"checkbox",
+        "value": false   
     },
     {
-        "name": "operationMode",
-        "label": "Operation mode",
-        "type": "uint8_t",
-        "ui_control":"select",
-        "value": 2,
-        "options":[
-            {"text": "MANUAL", "value": 0},
-            {"text": "POWER", "value": 1}
-        ]
+        "name": "ssid",
+        "label": "setup.wifi.control.ssid",
+        "type": "char",
+        "ui_control":"ssid",
+        "length": 255,
+        "value": ""
     },
     {
-        "name": "enableStatusLED",
-        "label": "Enable status LED",
-        "type": "uint8_t",
-        "ui_control":"select",
-        "value": 0,       
-        "options":[
-            {"text": "OFF",	"value": 0},
-            {"text": "ON",	"value": 1}
-        ]
+        "name": "password",
+        "label": "setup.wifi.control.password",
+        "type": "char",
+        "ui_control":"ssid",
+        "length": 255,
+        "value": ""
     },
     {
-        "display_filter": "state.operationMode==1",
-        "name": "serverAddressType",
-        "label": "Inverter address type",
-        "type": "uint8_t",
-        "ui_control":"select",
-        "value": 0,       
-        "options":[
-            {"text": "IP",	"value": 0},
-            {"text": "DNS",	"value": 1}
-        ]
+        "name": "useDHCP",
+        "label": "setup.wifi.control.use_dhcp",
+        "type": "bool",
+        "ui_control":"checkbox",
+        "value": true      
     },
     {
-        "display_filter": "state.operationMode==1 && state.serverAddressType == 0",
-        "name": "serverIp",
-        "label": "IP address of inverter",
+        "display_filter": "state.useDHCP == 0",
+        "name": "fixedIp",
+        "label": "setup.wifi.control.fixed_ip",
         "type": "char",
         "ui_control":"ip_address",
         "length": 15,
@@ -56,19 +40,45 @@
         "placeholder":"xxx.xxx.xxx.xxx"
     },
     {
-        "display_filter": "state.operationMode==1 && state.serverAddressType == 1",
-        "name": "serverDNS",
-        "label": "DNS of inverter",
+        "display_filter": "state.useDHCP == 0",
+        "name": "subnetMask",
+        "label": "setup.wifi.control.subnet_mask",
         "type": "char",
-        "ui_control":"dns",
-        "length": 255,
-        "value": "",
-        "placeholder":"myDNS"
+        "ui_control":"ip_address",
+        "length": 15,
+        "value": "0.0.0.0",
+        "placeholder":"xxx.xxx.xxx.xxx"
     },
     {
-        "display_filter": "state.operationMode==1",
+        "display_filter": "state.useDHCP == 0",
+        "name": "dnsServerIp",
+        "label": "setup.wifi.control.dns_server_ip",
+        "type": "char",
+        "ui_control":"ip_address",
+        "length": 15,
+        "value": "0.0.0.0",
+        "placeholder":"xxx.xxx.xxx.xxx"
+    },
+    {
+        "display_filter": "state.useDHCP == 0",
+        "name": "gatewayIp",
+        "label": "setup.wifi.control.gateway_ip",
+        "type": "char",
+        "ui_control":"ip_address",
+        "length": 15,
+        "value": "0.0.0.0",
+        "placeholder":"xxx.xxx.xxx.xxx"
+    },
+    {
+        "name": "wifiTestIsComplete",
+        "label": "setup.wifi_test.control.is_complete",
+        "type": "bool",
+        "ui_control":"hidden",
+        "value": "true"
+    },
+    {
         "name": "serverProductId",
-        "label": "Device type",
+        "label": "setup.server.control.type",
         "type": "uint16_t",
         "ui_control":"group_select",
         "optgroups": [
@@ -152,35 +162,22 @@
         ]
     },
     {
-        "display_filter": "state.operationMode==1",
+        "name": "serverHost",
+        "label":"setup.server.control.host",
+        "type": "char",
+        "ui_control":"text_input",
+        "length": 255,
+        "value": "",
+        "placeholder":"IP/DNS-Address"
+    },
+    {
         "name": "serverPort",
-        "label": "Port",
+        "label": "setup.server.control.port",
         "type": "uint16_t",
         "ui_control":"numeric_input",
-        "min": "1",
-        "max": "65535",
-        "value": "502"
-    },
-    {
-        "display_filter": "state.operationMode==1",
-        "name": "powerThresholdHigh",
-        "label": "Power threshold HIGH",
-        "type": "uint32_t",
-        "ui_control":"numeric_input",
-        "value": "20",
-        "min": "20",
-        "max": "1000000"
-
-    },
-    {
-        "display_filter": "state.operationMode==1",
-        "name": "powerThresholdLow",
-        "label": "Power threshold LOW",
-        "type": "uint32_t",
-        "ui_control":"numeric_input",
-        "value": "20",
-        "min": "20",
-        "max": "20000"
+        "min": 1,
+        "max": 65535,
+        "value": 502
     },
     {
         "display_filter": "state.operationMode==1",
@@ -196,5 +193,56 @@
             {"text": "5 min",	"value": 300},
             {"text": "10 min",	"value": 600}
         ]
+    },
+    {
+        "name": "serverTestIsComplete",
+        "label": "setup.server_test.control.is_complete",
+        "type": "bool",
+        "ui_control":"hidden",
+        "value": "true"
+    },
+    {
+        "name": "powerThresholdHigh",
+        "label": "setup.settings.control.power_threshold_high",
+        "type": "uint32_t",
+        "ui_control":"numeric_input",
+        "value": 20,
+        "min": 20,
+        "max": 20000
+
+    },
+    {
+        "name": "powerThresholdLow",
+        "label": "setup.settings.control.power_threshold_low",
+        "type": "uint32_t",
+        "ui_control":"numeric_input",
+        "value": 20,
+        "min": 20,
+        "max": 20000
+    },
+    {
+        "name": "outputStatus",
+        "label": "status.control.output_status",
+        "type": "bool",
+        "ui_control":"checkbox",
+        "value": true      
+    },
+    {
+        "name": "operationMode",
+        "label": "status.control.operation_mode",
+        "type": "uint8_t",
+        "ui_control":"select",
+        "value": 1,       
+        "options":[
+            {"text": "common.value.operation_mode.manual",	"value": 0},
+            {"text": "common.value.operation_mode.power",	"value": 1}
+        ]
+    },
+    {
+        "name": "measuredPower",
+        "label": "status.control.measured_power",
+        "type": "uint32_t",
+        "ui_control":"numeric_input",
+        "value": "0"
     }
 ]

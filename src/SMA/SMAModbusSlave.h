@@ -18,6 +18,10 @@ public:
   int _readRegister();
   String _runTest();
 
+  void resetTimer(unsigned long delay);
+  bool isTimerExpired();
+  void startTimer(unsigned long delay);
+
 private:
   WiFiClient *client;
   void (*_onValueChanged)(uint32_t oldValue, uint32_t newValue);
@@ -32,6 +36,8 @@ private:
   uint16_t _startAddress;
   uint16_t _quantityOfRegisters;
   uint32_t _registerValue;
+  unsigned long _delay;
+  unsigned long _timer;
 };
 
 extern SMAModbusSlave *smaModbusSlave;

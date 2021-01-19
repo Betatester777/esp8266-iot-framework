@@ -257,6 +257,10 @@ String WifiManager::scanNetworks()
     return json;
 }
 
+String WifiManager::getMACAddress(){
+    return WiFi.macAddress();
+}
+
 //captive portal loop
 void WifiManager::loop()
 {

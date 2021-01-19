@@ -3,6 +3,7 @@
 
 #define FIRMWARE_VERSION "0.0.1"
 #define PRODUCT_NAME "WiFiSolarPlug"
+#define CAPTIVE_PORTAL_IP "192.168.4.1"
 
 #define RelayPin 12
 #define LEDPinSwitch 13
@@ -66,6 +67,11 @@ struct WifiConfig
 	uint32_t dnsServerIp;
 };
 
+struct WifiTestConfig
+{
+	bool isComplete;
+};
+
 struct TimeConfig
 {
 	bool isComplete;
@@ -107,6 +113,7 @@ struct Settings
 extern uint32_t configVersion;
 extern const LegalConfig legalDefaults;
 extern const WifiConfig wifiDefaults;
+extern const WifiTestConfig wifiTestDefaults;
 extern const TimeConfig timeDefaults;
 extern const ServerConfig serverDefaults;
 extern const ServerTestConfig serverTestDefaults;

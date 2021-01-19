@@ -1,15 +1,37 @@
 {
   "common.status.connecting": "wird geladen...",
 
+  "status.control.relay_active": " Schaltzustand",
+
+  "common.value.on": "AN",
+  "common.value.off": "AUS",
+  "common.value.operation_mode.manual": "MANUEL",
+  "common.value.operation_mode.power": "ERTRAGSWERT",
+  "common.value.operation_mode.timer": "TIMER",
+  "common.value.operation_mode.manual.active": "‣ MANUEL",
+  "common.value.operation_mode.power.active": "‣ ERTRAGSWERT",
+  "common.value.operation_mode.timer.active": "‣ TIMER",
+
+
+
   "common.menu.config": "Konfiguration",
   "common.menu.update": "Update",
   "common.menu.info": "Info",
   "common.menu.status": "Status",
   "common.menu.setup": "Setup",
 
+  "status.content.title": "Status",
+  "status.control.output_status": "Schaltzustand",
+  "status.control.operation_mode": "Betriebsart",
+  "status.control.measured_power": "Letzte Ertragsleistung",
+  "status.control.measured_power.value": "{value} W",
+  "status.control.measured_power.value.unknown": "NICHT BEKANNT",
+  "status.control.measured_power.value.disabled": "DEAKTIVIERT",
+
   "common.info.content.title": "Produktinfo",
   "common.info.content.text": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.   {br}Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.   {br}  {br}  Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.   {br}  {br}  Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.   {br}  {br}  Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis.   {br}  {br}  At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, At accusam aliquyam diam diam dolore dolores duo eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet clita ea et gubergren, kasd magna no rebum. sanctus sea sed takimata ut vero voluptua. est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur",  
   
+  "setup.error.invalid_cope": "Fehler: ungültiger Sutup-Schritt",
   
   "setup.legal.content.title": "Willkommen beim Einrichtungsassitenten der Solar Power Socket.",
   "setup.legal.content.agreement": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
@@ -29,10 +51,10 @@
   "setup.wifi.control.back": "Zurück",
   "setup.wifi.control.save": "Speichern und verbinden",
 
-  "setup.wifi_status.content.title": "Wlan Konfiguration abschließen ",
-  "setup.wifi_status.content.text": "Die Solar Power Socket wird sich nun mit dem ausgewählten Wlan Netz verbinden.Um die weitere Einrichtung vor zunehmen zu können, muss ihr Endgerät in das selbe Netzwerk. Dort können Sie über:{br}{br}PC und iOS (iPhone / iPad){br}{url}{br}{br}Android{br}{android_url}{br}{br}auf die Webobfläche.",
-  "setup.wifi_status.control.back": "Zurück",
-  "setup.wifi_status.control.apply": "OK",
+  "setup.wifi_test.content.title": "Wlan Konfiguration abschließen ",
+  "setup.wifi_test.content.text": "Die Solar Power Socket wird sich nun mit dem ausgewählten Wlan Netz verbinden.Um die weitere Einrichtung vor zunehmen zu können, muss ihr Endgerät in das selbe Netzwerk. Dort können Sie über:{br}{br}PC und iOS (iPhone / iPad){br}{url}{br}{br}Android{br}{android_url}{br}{br}auf die Webobfläche.",
+  "setup.wifi_test.control.back": "Zurück",
+  "setup.wifi_test.control.save": "Mit Netzwerk verbinden",
 
   "setup.server.content.title": "Wechselrichter verbinden",
   "setup.server.control.type": "Bitte wählen Sie den SMA Wechselrichter aus",
@@ -55,7 +77,7 @@
 
   "setup.server_test.control.response_value": "Aktueller Ertrag",
   "setup.server_test.control.response_value.success": "{value} W",
-  "setup.server_test.control.back": "Zurück",
+  "setup.server_test.control.edit": "Configurieren",
   "setup.server_test.control.repeat": "Wiederholen",
   "setup.server_test.control.save": "Weiter",
 
@@ -64,6 +86,18 @@
   "setup.settings.control.power_threshold_low":"Power threshold LOW",
   "setup.settings.control.save" : "Speichern und abschließen",
 
-  "status.content.title": "Status",
-  "setup.complete.control.save": "Zum Hauptmenü"
+  "setup.complete.content.title": "Einrichtung wurde abgeschloßen",
+  "setup.complete.scope.legal": "Nutzungsvereinbarung",
+  "setup.complete.scope.wifi": "WLAN-Verbindung",
+  "setup.complete.scope.server": "Inverter-Verbindung",
+  "setup.complete.scope.server_test": "Verbindungstest",
+  "setup.complete.scope.settings": "Einschaltkriterien",
+  "setup.complete.control.save": "Zum Hauptmenü",
+
+  "config.content.title": "Konfiguration",
+  "config.scope.legal": "Nutzungsvereinbarung",
+  "config.scope.wifi": "WLAN-Verbindung",
+  "config.scope.server": "Inverter-Verbindung",
+  "config.scope.server_test": "Verbindungstest",
+  "config.scope.settings": "Einschaltkriterien"
 }

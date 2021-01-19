@@ -14,6 +14,27 @@ SMAModbusSlave::SMAModbusSlave(String serverHost, uint16_t serverPort, uint16_t 
   _requestPayload = new SMARequest(_transactionId, _protocolId, 6, _unitId, _functionCode, _startAddress, _quantityOfRegisters);
 }
 
+void SMAModbusSlave::resetTimer(unsigned long delay)
+{
+  _delay=delay;
+  _timer = millis() - _delay;
+}
+
+bool SMAModbusSlave::isTimerExpired()
+{
+  if (_delay > 0 && millis() > _timer + _delay)
+  {
+    return true;
+  }
+  return false;
+}
+
+void SMAModbusSlave::startTimer(unsigned long delay)
+{
+  _delay=delay;
+  _timer += _delay;
+}
+
 void SMAModbusSlave::setHostAndPort(String serverHost, uint16_t serverPort)
 {
   _serverHost = serverHost;
@@ -143,3 +164,5 @@ String SMAModbusSlave::_runTest()
   Serial.println(JSON);
   return JSON;
 }
+
+SMAModbusSlave *smaModbusSlave;

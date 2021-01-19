@@ -1,8 +1,8 @@
 import React, { Children } from 'react';
 import PropTypes from 'prop-types';
-import Setup from "./setup.json";
 import StateMachine from 'javascript-state-machine';
 import i18nManager from "./i18n.js";
+import Fields from "./Fields.json";
 
 export const ApiContext = React.createContext();
 export const ApiContextConsumer = ApiContext.Consumer;
@@ -14,6 +14,7 @@ const StatusType = Object.freeze({
 });
 
 let url = "http://192.168.4.1";
+
 url = "http://192.168.178.39";
 
 if (process.env.NODE_ENV === "production") { url = window.location.origin; }
@@ -27,6 +28,7 @@ export class ApiContextProvider extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            wsInit: false,
             scope: null,
             isConnected: false,
             isLoaded: false,
@@ -36,9 +38,12 @@ export class ApiContextProvider extends React.Component {
             statusType: StatusType.info,
         };
 
+        this.webSocketUrl = url.replace("http://", "ws://").concat("/ws");
+
         this.SetupScope = Object.freeze({
             legal: "legal",
             wifi: "wifi",
+            wifi_test: "wifi_test",
             server: "server",
             server_test: "server_test",
             time: "time",
@@ -69,7 +74,12 @@ export class ApiContextProvider extends React.Component {
                     "subnetMask",
                     "dnsServerIp",
                     "gatewayIp",
-                    "mdnsName",
+                ]
+            },
+            wifi_test: {
+                url: `${url}/api/setup/wifi_test`,
+                fields: [
+                    "wifiTestIsComplete",
                 ]
             },
             server: {
@@ -97,18 +107,24 @@ export class ApiContextProvider extends React.Component {
                     "powerThresholdLow"
                 ]
             },
-            complete: {
-                url: `${url}/api/setup/complete`,
-                fields: []
+            status: {
+                fields: [
+                    "outputStatus",
+                    "operationMode",
+                    "measuredPower"
+                ]
             }
         });
+
+        this.config = null;
+        this.checkConnectionInterval = null;
 
         this.controls = {};
 
         Object.keys(this.api).map((apiKey) => {
             let api = this.api[apiKey];
             api.fields.map((field) => {
-                this.controls[field] = Setup.find(obj => { return obj.name === field; });
+                this.controls[field] = Fields.find(obj => { return obj.name === field; });
                 if (this.controls[field]) {
                     this.controls[field].translation = this.i18n.get(this.controls[field].label);
                     this.controls[field].translation_info = this.i18n.get(this.controls[field].label + ".info");
@@ -124,6 +140,7 @@ export class ApiContextProvider extends React.Component {
                 { name: 'load', from: 'saved', to: 'loading' },
                 { name: 'load', from: 'load_failed', to: 'loading' },
                 { name: 'load', from: 'ready', to: 'loading' },
+                { name: 'load', from: 'loading', to: 'loading' },
                 { name: 'load_success', from: 'loading', to: 'ready' },
                 { name: 'load_fail', from: 'loading', to: 'load_failed' },
                 { name: 'save', from: 'ready', to: 'saving' },
@@ -172,8 +189,7 @@ export class ApiContextProvider extends React.Component {
                                 isSaved: true,
                             }, () => {
                                 if (this.state.scope !== this.SetupScope.wifi) {
-                                    //Skip on WIFI edit because of reconnect
-                                    this.loadStatus();
+                                    //Relad status
                                 }
                             });
                             break;
@@ -189,70 +205,180 @@ export class ApiContextProvider extends React.Component {
         });
     }
 
-    componentDidMount() {
-        this.loadStatus();
-    }
+    checkWsConnection = () => {
+        if (!this.ws || this.ws.readyState == WebSocket.CLOSED) {
+            this.wsConnect(); //check if websocket instance is closed, if so call `connect` function.
+        } else if (this.ws && this.ws.readyState == WebSocket.OPEN) {
+            this.lastPingValue = `${new Date().getTime()}`;
+            let payload = { command: "ping", value: this.lastPingValue };
+            this.wsSend(payload);
 
-    loadStatus = () => {
-        let statusUrl = `${url}/api/setup/status/get`;
-        console.info(`Loading status [url=${statusUrl}]`);
-        fetch(statusUrl)
-            .then(response => response.json())
-            .then((setupStatus) => {
-                console.info(`Loaded status [status=${JSON.stringify(setupStatus)}]`);
-                if (!setupStatus.legal) {
-                    this.setState({ scope: this.SetupScope.legal }, () => {
-                        this.load();
-                    });
-                } else if (!setupStatus.wifi) {
-                    this.setState({ scope: this.SetupScope.wifi }, () => {
-                        this.load();
-                    });
-                } else if (!setupStatus.server) {
-                    this.setState({ scope: this.SetupScope.server }, () => {
-                        this.load();
-                    });
-                } else if (!setupStatus.server_test) {
-                    this.setState({ scope: this.SetupScope.server_test }, () => {
-                        this.load();
-                    });
-                } else if (!setupStatus.settings) {
-                    this.setState({ scope: this.SetupScope.settings }, () => {
-                        this.load();
-                    });
-                }else{
-                    this.setState({ scope: this.SetupScope.complete }, () => {
-                        this.load();
-                    });
+            clearTimeout(this.keepAliveCheckTimeout);
+
+            this.keepAliveCheckTimeout = setTimeout(() => {
+                if (this.lastPingValue !== this.lastPongValue) {
+                    console.log("ws failed [error=missed keepalive response]");
+                    this.setState({ isConnected: false });
+                    this.ws.close();
+                    this.machine.loadFail();
                 }
+            }, 500);
+        }
+    };
 
-                this.setState({isConnected : true});
-            })
-            .catch((error) => {
-                // handle your errors here
-                console.error(error);
-            });
+    getStatus=()=>{
+        let payload = { command: "get_status" };
+        this.wsSend(payload);
     }
 
-    setStateExtern = (data, onDone) => {
+    wsConnect = () => {
+        this.ws = new WebSocket(this.webSocketUrl);
+
+        this.ws.onopen = () => {
+            console.log("ws status changed [status=connected]");
+            this.machine.load();
+        }
+
+        this.ws.onmessage = this.onWsMessage;
+
+        this.ws.onerror = (error) => {
+            console.log(`ws failed [error=${error}]`);
+            clearTimeout(this.keepAliveCheckTimeout);
+            this.ws.close();
+            this.machine.loadFail();
+        }
+
+        this.ws.onclose = (error) => {
+            this.setState({ isConnected: false });
+            clearTimeout(this.keepAliveCheckTimeout);
+            console.error(`ws status changed [status=closed, reson=${error.reason}]`);
+        }
+    }
+
+    componentDidMount() {
+        console.log("didmount")
+        if (!this.wsInit) {
+            this.wsConnect(url.replace("http://", "ws://").concat("/ws"));
+            this.checkConnectionInterval = setInterval(this.checkWsConnection, 1000);
+        }
+    }
+
+    onWsMessage = (event) => {
+        let lastScope=null;
+        console.log(`ws receive [message=${event.data}]`);
+        const data = JSON.parse(event.data);
+        if (!data.hasOwnProperty("type")) {
+            return;
+        }
+
+        switch (data.type) {
+            case "pong":
+                this.lastPongValue = data.value;
+                break;
+            case "status":
+                if(this.machine.is("saving")) {
+                    console.log("skip loading:", this.machine.state)
+                    return;
+                }
+                let scopes = [
+                    this.SetupScope.legal,
+                    this.SetupScope.wifi,
+                    this.SetupScope.wifi_test,
+                    this.SetupScope.server,
+                    this.SetupScope.server_test,
+                    this.SetupScope.settings
+                ];
+
+                this.setState({deviceName: data["deviceName"]});
+
+                for (let i = 0; i < scopes.length; i++) {
+                    let scope = scopes[i];
+                    if (data[scope] !== 1) {
+                        console.log("######set scope:", scope);
+                        lastScope=this.state.scope;
+                        this.setState({ scope: scope, isConnected: true, stamp: new Date().getTime() }, () => {
+                            if (this.state.scope !== lastScope) {
+                                console.log("######set scope done:", this.state.scope)
+                                this.config = this.api[this.state.scope];
+                                this.load();
+                            }
+                        });
+                        return;
+                    }
+                }
+                lastScope=this.state.scope;
+                this.setState({ scope: this.SetupScope.complete, isConnected: true, stamp: new Date().getTime() }, () => {
+                    console.log("######set scope done:", this.state.scope)
+                    this.config = this.api["status"];
+                    this.machine.load();
+
+                    let newData = {}
+                    this.config.fields.map((field) => {
+                        newData[field] = data[field];
+                        newData[`${field}_initial`] = newData[field];
+                        return;
+                    });    
+                    this.setState(newData);
+
+                    this.machine.loadSuccess();
+                });
+
+                break;
+        }
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.keepAliveCheckTimeout);
+        clearInterval(this.checkConnectionInterval);
+    }
+
+    setStateFromChild = (data, onDone) => {
         if (onDone) {
             this.setState({ ...data }, onDone);
         } else {
             this.setState({ ...data });
         }
+    }
 
+    loadPreviousScope = () => {
+        this.machine.save();
+        let data = new FormData();
+
+        let payload = {};
+
+        let previousScopeUrl = `${url}/api/setup/previous_scope`;
+
+        data.append("data", JSON.stringify(payload));
+        console.info(`Loading previous scope data [url=${previousScopeUrl}/previous_scope/set, data=${JSON.stringify(payload)}]`);
+        fetch(`${previousScopeUrl}/set`,
+            {
+                method: "post",
+                body: data
+            }).then((response) => {
+                console.info("status:", response.status);
+                if (response.status == 200) {
+                    this.machine.saveSuccess();
+                    this.getStatus();
+                } else {
+                    console.error(`server response status: [${response.status}]`);
+                    this.machine.saveFail();
+                }
+            }).catch((error) => {
+                console.error(error);
+                this.machine.saveFail();
+            });
+        return false;
     }
 
     load = () => {
         this.machine.load();
-        let scopeConfig = this.api[this.state.scope];
-        console.info(`Loading data [url=${scopeConfig.url}/get]`);
-        fetch(`${scopeConfig.url}/get`)
+        console.info(`Loading data [url=${this.config.url}/get]`);
+        fetch(`${this.config.url}/get`)
             .then(response => response.json())
             .then((responseData) => {
                 console.info(`Loaded data [data=${JSON.stringify(responseData)}]`);
                 let data = {}
-                scopeConfig.fields.map((field) => {
+                this.config.fields.map((field) => {
                     data[field] = responseData[field];
                     data[`${field}_initial`] = data[field];
                     return;
@@ -270,18 +396,17 @@ export class ApiContextProvider extends React.Component {
 
     save = () => {
         this.machine.save();
-        let scopeConfig = this.api[this.state.scope];
         let data = new FormData();
 
         let payload = {};
-        scopeConfig.fields.map((field) => {
+        this.config.fields.map((field) => {
             payload[field] = this.state[field];
             return;
         });
 
         data.append("data", JSON.stringify(payload));
-        console.info(`Saving data [url=${scopeConfig.url}/set, data=${JSON.stringify(payload)}]`);
-        fetch(`${scopeConfig.url}/set`,
+        console.info(`Saving data [url=${this.config.url}/set, data=${JSON.stringify(payload)}]`);
+        fetch(`${this.config.url}/set`,
             {
                 method: "post",
                 body: data
@@ -289,6 +414,7 @@ export class ApiContextProvider extends React.Component {
                 console.info("status:", response.status);
                 if (response.status == 200) {
                     this.machine.saveSuccess();
+                    this.getStatus();
                 } else {
                     console.error(`server response status: [${response.status}]`);
                     this.machine.saveFail();
@@ -300,16 +426,35 @@ export class ApiContextProvider extends React.Component {
         return false;
     }
 
+    setOperationMode=(operationMode)=>{
+        let payload = {command: "set_operation_mode", operationMode:operationMode };
+        this.wsSend(payload);
+    }
+
+    setOutputStatus=(outputStatus)=>{
+        let payload = {command: "set_output_status", outputStatus: outputStatus};
+        this.wsSend(payload);
+    }
+
+    wsSend=(payload)=>{
+        console.log(`ws send [payload=${JSON.stringify(payload)}]`);
+        this.ws.send(JSON.stringify(payload));
+    }
+
     render() {
+        console.log("#########render", this.state.isConnected)
         return (
             <ApiContext.Provider
                 value={{
                     controls: this.controls,
                     state: this.state,
-                    setState: this.setStateExtern,
+                    setState: this.setStateFromChild,
                     i18n: this.i18n,
                     load: this.load,
                     save: this.save,
+                    setOperationMode: this.setOperationMode,
+                    setOutputStatus: this.setOutputStatus,
+                    loadPreviousScope: this.loadPreviousScope,
                 }}
             >
                 {Children.only(this.props.children)}

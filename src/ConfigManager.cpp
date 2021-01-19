@@ -117,10 +117,17 @@ bool ConfigManager::begin(int numBytes)
 
 String ConfigManager::getDeviceName()
 {
-    String serialNumber = "000";
-    String deviceId = serialNumber.substring(serialNumber.length() - 3, 3);
-
-    return String(PRODUCT_NAME) + "-" + deviceId;
+    String deviceId = String(PRODUCT_NAME) + "-";
+    String macAddress = wifiManager.getMACAddress();
+    Serial.println("MAC: " + macAddress);
+    for (unsigned int i = macAddress.length() - 6; i < macAddress.length(); i++)
+    {
+        if (macAddress[i] != ':')
+        {
+            deviceId += macAddress[i];
+        }
+    }
+    return deviceId;
 }
 
 void ConfigManager::reset(uint8_t scope)
@@ -134,6 +141,11 @@ void ConfigManager::reset(uint8_t scope)
     {
         wifiManager.forget();
         memcpy_P(&wifi, &wifiDefaults, sizeof(wifi));
+    }
+
+    if ((scope & SCOPE_WIFI_TEST) == SCOPE_WIFI_TEST)
+    {
+        memcpy_P(&wifi_test, &wifiTestDefaults, sizeof(wifi_test));
     }
 
     if ((scope & SCOPE_TIME) == SCOPE_TIME)
@@ -162,6 +174,7 @@ void ConfigManager::reset(uint8_t scope)
     }
 
     save(scope);
+    GUI.publishStatus();
 }
 
 int ConfigManager::save(uint8_t scope)
@@ -191,6 +204,15 @@ int ConfigManager::save(uint8_t scope)
     }
 
     startByte += sizeof(wifi) + sizeof(scopeChecksum);
+    if ((scope & SCOPE_WIFI_TEST) == SCOPE_WIFI_TEST)
+    {
+        scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&wifi_test), sizeof(wifi_test));
+        Serial.println("Save [scope=WIFI_TEST, start=" + String(startByte) + "]");
+        EEPROM.put(startByte, wifi_test);
+        EEPROM.put(startByte + sizeof(wifi_test), scopeChecksum);
+    }
+
+    startByte += sizeof(wifi_test) + sizeof(scopeChecksum);
     if ((scope & SCOPE_TIME) == SCOPE_TIME)
     {
         scopeChecksum = checksum(reinterpret_cast<uint8_t *>(&time), sizeof(time));
@@ -237,6 +259,8 @@ int ConfigManager::save(uint8_t scope)
 
     Serial.println("Save EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
     EEPROM.commit();
+
+    GUI.publishStatus();
     return 0;
 }
 
@@ -303,6 +327,11 @@ String ConfigManager::getJSONString(uint8_t scope)
         jsonBuffer["mdnsName"] = configManager.getDeviceName();
     }
 
+    if ((scope & SCOPE_WIFI_TEST) == SCOPE_WIFI_TEST)
+    {
+        jsonBuffer["isComplete"] = configManager.wifi_test.isComplete;
+    }
+
     if ((scope & SCOPE_TIME) == SCOPE_TIME)
     {
         jsonBuffer["enableDaylightSavingTime"] = configManager.time.enableDaylightSavingTime;
@@ -343,21 +372,44 @@ String ConfigManager::getJSONString(uint8_t scope)
     return JSON;
 }
 
-String ConfigManager::getSetupStatusJSONString()
+uint8_t ConfigManager::setPreviousSetupScope()
 {
-    String JSON;
-    StaticJsonDocument<1024> jsonBuffer;
-    jsonBuffer["legal"] = (uint8_t)legal.isComplete;
-    jsonBuffer["wifi"] = (uint8_t)wifi.isComplete;
-    jsonBuffer["time"] = (uint8_t)time.isComplete;
-    jsonBuffer["server"] = (uint8_t)server.isComplete;
-    jsonBuffer["server_test"] = (uint8_t)server_test.isComplete;
-    jsonBuffer["timer"] = (uint8_t)timer.isComplete;
-    jsonBuffer["settings"] = (uint8_t)settings.isComplete;
-
-    serializeJson(jsonBuffer, JSON);
-    Serial.println(JSON);
-    return JSON;
+    if (settings.isComplete)
+    {
+        settings.isComplete = false;
+        save(SCOPE_SETTINGS);
+        return SCOPE_SERVER_TEST;
+    }
+    else if (server_test.isComplete)
+    {
+        server_test.isComplete = false;
+        save(SCOPE_SERVER_TEST);
+        return SCOPE_SERVER;
+    }
+    else if (server.isComplete)
+    {
+        server.isComplete = false;
+        save(SCOPE_SERVER);
+        return SCOPE_WIFI;
+    }
+    else if (wifi_test.isComplete)
+    {
+        wifi_test.isComplete = false;
+        save(SCOPE_WIFI_TEST);
+        return SCOPE_WIFI;
+    }
+    else if (wifi.isComplete)
+    {
+        wifi.isComplete = false;
+        save(SCOPE_WIFI);
+        return SCOPE_LEGAL;
+    }
+    else if (legal.isComplete)
+    {
+        legal.isComplete = false;
+        save(SCOPE_LEGAL);
+    }
+    return 0;
 }
 
 int ConfigManager::setJSONString(uint8_t scope, String config)
@@ -421,6 +473,11 @@ int ConfigManager::setJSONString(uint8_t scope, String config)
             {
                 return 1;
             }
+        }
+
+        if ((scope & SCOPE_WIFI_TEST) == SCOPE_WIFI_TEST)
+        {
+            wifi_test.isComplete = (bool)obj[String("wifiTestIsComplete")].as<uint8_t>();
         }
 
         if ((scope & SCOPE_TIME) == SCOPE_TIME)

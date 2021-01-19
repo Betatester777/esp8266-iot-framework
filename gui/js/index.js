@@ -2,24 +2,21 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { render } from "preact";
 
-import { BrowserRouter, Switch, Route, NavLink } from "react-router-dom";
+import { HashRouter, Switch, Route, NavLink } from "react-router-dom";
 import { Box } from "react-feather";
 import { Menu, Header, Title, Hamburger, Spinner } from "./components/UiComponents";
 
 import { ApiContextProvider, ApiContextConsumer } from "./ApiContextProvider";
 import SetupLegal from "./components/SetupLegal";
 import SetupWifi from "./components/SetupWifi";
+import SetupWifiTest from "./components/SetupWifiTest";
 import SetupServer from "./components/SetupServer";
 import SetupServerTest from "./components/SetupServerTest";
 import SetupSettings from "./components/SetupSettings";
-
+import ProductInfo from "./components/ProductInfo";
+import ConfigPage from "./components/ConfigPage";
 import StatusPage from "./components/StatusPage";
 
-import ProductInfo from "./components/ProductInfo";
-
-import { WifiPage } from "./components/WifiPage";
-import { ConfigPage } from "./components/ConfigPage";
-import { FirmwarePage } from "./components/FirmwarePage";
 import Logo from './logo.svg';
 import "./styles.less";
 
@@ -43,21 +40,10 @@ class Root extends React.Component {
             configData: null,
             setupScope: null,
         }
-
-        //this.ws = new WebSocket(url.replace("http://", "ws://").concat("/ws"));
-        //this.ws.addEventListener("message", this.onWsMessage);
     }
 
     componentDidMount() {
 
-    }
-
-    onWsMessage = (event) => {
-        event.data.arrayBuffer().then((buffer) => {
-            const dv = new DataView(buffer, 0);
-            const timestamp = dv.getUint32(0, true);
-            displayData.push([timestamp, bin2obj(buffer.slice(8, buffer.byteLength), [])]);
-        });
     }
 
     toggleMenu = (e) => { this.setState({ menu: !this.state.menu }); }
@@ -67,67 +53,69 @@ class Root extends React.Component {
     render() {
         let menuClass = this.state.menu ? "menu" : "menu menuHidden";
 
-        let routeSwitch = null;
-        let menu = null;
-        let setupUI = null;
-
         return (
             <div>
-                <BrowserRouter>
-                    <Header>
-                        <Title>
-                            <span className="header-logo-container"><Logo className="header-logo" /></span>
-                            <span className="header-text">{productName}</span>
-                        </Title>
-                        <ApiContextProvider>
-                            <ApiContextConsumer>
-                                {(context) => {
-                                    if (!context.state.isConnected) {
-                                        menu = <><Hamburger onClick={this.toggleMenu} />
-                                        <Menu className={menuClass}>
-                                            <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.status")}</NavLink></li>
-                                            <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
-                                        </Menu></>;
-                                    } else {
-                                        if (context.state.scope === "complete") {
-                                            menu = <><Hamburger onClick={this.toggleMenu} />
-                                                <Menu className={menuClass}>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.status")}</NavLink></li>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/config">{context.i18n.get("common.menu.config")}</NavLink></li>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/update">{context.i18n.get("common.menu.update")}</NavLink></li>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
-                                                </Menu></>;
-                                        } else {
-                                            menu = <><Hamburger onClick={this.toggleMenu} />
-                                                <Menu className={menuClass}>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.setup")}</NavLink></li>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/update">{context.i18n.get("common.menu.update")}</NavLink></li>
-                                                    <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
-                                                </Menu></>;
-                                        }
-                                    }
-
-                                    return menu;
-                                }}
-                            </ApiContextConsumer>
-                        </ApiContextProvider>
-                    </Header>
-
-                    <div className="page">
-                        <ApiContextProvider>
-                            <ApiContextConsumer>
-                                {(context) => {
-                                    if (!context.state.isConnected) {
-                                        routeSwitch = <Switch>
-
-                                            <Route exact path="/info"><ProductInfo context={context} /></Route>
-                                            <Route path="/">
+                <HashRouter>
+                    <ApiContextProvider>
+                        <ApiContextConsumer>
+                            {(context) => {
+                                let content = null;
+                                let setupUI = null;
+                                console.log("!!!!!!render", context.state.isConnected)
+                                if (!context.state.isConnected) {
+                                    content = (
+                                        <div>
+                                            <Header>
+                                                <Title>
+                                                    <span className="header-logo-container"><Logo className="header-logo" /></span>
+                                                    <span className="header-text">{productName}</span>
+                                                </Title>
                                                 <>
-                                                    <Spinner />
-                                                    {context.i18n.get("common.status.connecting")}
+                                                    <Hamburger onClick={this.toggleMenu} />
+                                                    <Menu className={menuClass}>
+                                                        <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.status")}</NavLink></li>
+                                                        <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
+                                                    </Menu>
                                                 </>
-                                            </Route>
-                                        </Switch>;
+                                            </Header>
+                                            <div className="page">
+                                                <Switch>
+                                                    <Route exact path="/info"><ProductInfo context={context} /></Route>
+                                                    <Route path="/">
+                                                        <div className="hv-center">
+                                                            <div className="h-center-align"><Spinner /></div>
+                                                            <div className="h-center-align">{context.i18n.get("common.status.connecting")}</div>
+                                                        </div>
+                                                    </Route>
+                                                </Switch>
+                                            </div>
+                                        </div>);
+                                } else {
+                                    if (context.state.scope === "complete") {
+                                        content = (
+                                            <div>
+                                                <Header>
+                                                    <Title>
+                                                        <span className="header-logo-container"><Logo className="header-logo" /></span>
+                                                        <span className="header-text">{productName}</span>
+                                                    </Title>
+                                                    <><Hamburger onClick={this.toggleMenu} />
+                                                        <Menu className={menuClass}>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.status")}</NavLink></li>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/config">{context.i18n.get("common.menu.config")}</NavLink></li>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/update">{context.i18n.get("common.menu.update")}</NavLink></li>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
+                                                        </Menu></>
+                                                </Header>
+                                                <div className="page">
+                                                    <Switch>
+                                                        <Route exact path="/config"><ConfigPage context={context} /></Route>
+                                                        <Route exact path="/update">update </Route>
+                                                        <Route exact path="/info"><ProductInfo context={context} /></Route>
+                                                        <Route path="/"><StatusPage context={context} /></Route>
+                                                    </Switch>
+                                                </div>
+                                            </div>);
                                     } else {
                                         switch (context.state.scope) {
                                             case "legal":
@@ -135,6 +123,9 @@ class Root extends React.Component {
                                                 break;
                                             case "wifi":
                                                 setupUI = <SetupWifi context={context} />
+                                                break;
+                                            case "wifi_test":
+                                                setupUI = <SetupWifiTest context={context} />
                                                 break;
                                             case "server":
                                                 setupUI = <SetupServer context={context} />
@@ -145,30 +136,41 @@ class Root extends React.Component {
                                             case "settings":
                                                 setupUI = <SetupSettings context={context} />
                                                 break;
+                                            default:
+                                                setupUI = context.i18n.get("setup.error.invalid_scope");
+                                                break;
                                         }
-                                        if (context.state.scope === "complete") {
-                                            routeSwitch = <Switch>
-                                                <Route exact path="/config">config</Route>
-                                                <Route exact path="/update">update</Route>
-                                                <Route exact path="/info"><ProductInfo context={context} /></Route>
-                                                <Route path="/"><StatusPage context={context} /></Route>
-                                            </Switch>;
-                                        } else {
-                                            routeSwitch = <Switch>
-                                                <Route exact path="/config">config</Route>
-                                                <Route exact path="/update">update</Route>
-                                                <Route exact path="/info"><ProductInfo context={context} /></Route>
-                                                <Route path="/">{setupUI}</Route>
-                                            </Switch>;
-                                        }
+                                        content = (
+                                            <div>
+                                                <Header>
+                                                    <Title>
+                                                        <span className="header-logo-container"><Logo className="header-logo" /></span>
+                                                        <span className="header-text">{productName}</span>
+                                                    </Title>
+                                                    <><Hamburger onClick={this.toggleMenu} />
+                                                        <Menu className={menuClass}>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/">{context.i18n.get("common.menu.setup")}</NavLink></li>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/update">{context.i18n.get("common.menu.update")}</NavLink></li>
+                                                            <li><NavLink onClick={this.hideMenu} exact to="/info">{context.i18n.get("common.menu.info")}</NavLink></li>
+                                                        </Menu></>
+                                                </Header>
+                                                <div className="page">
+                                                    <Switch>
+                                                        <Route exact path="/update">update</Route>
+                                                        <Route exact path="/info"><ProductInfo context={context} /></Route>
+                                                        <Route path="/">{setupUI}</Route>
+                                                    </Switch>
+                                                </div>
+                                            </div>);
                                     }
-                                    return routeSwitch;
-                                }}
-                            </ApiContextConsumer>
-                        </ApiContextProvider>
-                    </div>
+                                }
+                                return content;                              
 
-                </BrowserRouter >
+                            }}
+
+                        </ApiContextConsumer>
+                    </ApiContextProvider>
+                </HashRouter>
             </div>
         );
     }

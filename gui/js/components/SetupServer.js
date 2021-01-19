@@ -8,7 +8,7 @@ export default class SetupServer extends React.Component {
         this.controls = this.props.context.controls;
         this.i18n = this.props.context.i18n;
 
-        this.state={
+        this.state = {
             showCustomPort: false
         };
     }
@@ -17,7 +17,7 @@ export default class SetupServer extends React.Component {
         let showCustomPort = !this.state.showCustomPort;
         if (!showCustomPort) {
             this.setState({ showCustomPort: showCustomPort });
-            this.props.context.setState({serverPort: 502});
+            this.props.context.setState({ serverPort: 502 });
         } else {
             this.setState({ showCustomPort: showCustomPort });
         }
@@ -33,44 +33,35 @@ export default class SetupServer extends React.Component {
         let isSaveEnabled = false;
 
         let apiState = this.props.context.state;
-        let content = <>
-            <Spinner />
-            {this.i18n.get("common.status.connecting")}
-        </>;
-
-        if (apiState.isLoaded) {
-
-            if(apiState.serverHost.length>0 && apiState.serverPort>0 && apiState.serverPort<=65535)
-            {
-                isSaveEnabled=true;
+        if(apiState.isLoaded){
+            if (apiState.serverHost.trim().length > 0 && apiState.serverPort > 0 && apiState.serverPort <= 65535) {
+                isSaveEnabled = true;
             }
-
-            content = <div>
-                <h2>{this.i18n.get("setup.server.content.title")}</h2>
-                <Form>
-                    <OptGroupSelect control={this.controls.serverProductId} state={apiState} onChangeValue={this.onChangeValue} />
-                    <TextInput control={this.controls.serverHost} state={apiState} onChangeValue={this.onChangeValue} />
-                    <p>
-                        <label for="showCustomPort">
-                            <b>{this.i18n.get("setup.server.control.custom_port")}</b>
-                        </label>
-                        <input id="showCustomPort" name="showCustomPort" type="checkbox" onChange={this.toggleExtendedConfigurations} value={0} checked={this.state.showCustomPort} />
-                    </p>
-                    {
-                        this.state.showCustomPort ?
-                            <NumericInput control={this.controls.serverPort} state={apiState} onChangeValue={this.onChangeValue} />
-                            : null
-                    }
-                    <p>
-                        <Button name="buttonSave" title={this.i18n.get("setup.server.control.save")} onClick={this.props.context.save} isDisabled={!isSaveEnabled} />
-                    </p>
-                </Form>
-            </div>
         }
 
         return (
             <div>
-                {content}
+                <div>
+                    <h2>{this.i18n.get("setup.server.content.title")}</h2>
+                    <Form>
+                        <OptGroupSelect control={this.controls.serverProductId} state={apiState} onChangeValue={this.onChangeValue} />
+                        <TextInput control={this.controls.serverHost} state={apiState} onChangeValue={this.onChangeValue} />
+                        <p>
+                            <label for="showCustomPort">
+                                <b>{this.i18n.get("setup.server.control.custom_port")}</b>
+                            </label>
+                            <input id="showCustomPort" name="showCustomPort" type="checkbox" onChange={this.toggleExtendedConfigurations} value={0} checked={this.state.showCustomPort} />
+                        </p>
+                        {
+                            this.state.showCustomPort ?
+                                <NumericInput control={this.controls.serverPort} state={apiState} onChangeValue={this.onChangeValue} />
+                                : null
+                        }
+                        <p>
+                            <Button name="buttonSave" title={this.i18n.get("setup.server.control.save")} onClick={this.props.context.save} isDisabled={!isSaveEnabled} />
+                        </p>
+                    </Form>
+                </div>
             </div>
         );
     }

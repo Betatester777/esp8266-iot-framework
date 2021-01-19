@@ -32,6 +32,7 @@ public:
     void setNewWifi(String newSSID, String newPass);
     void setNewWifi(String newSSID, String newPass, bool useDHCP, uint32_t newIp, uint32_t newSub, uint32_t newGw, uint32_t newDns);
     String scanNetworks();
+    String getMACAddress();
 };
 
 extern WifiManager wifiManager;

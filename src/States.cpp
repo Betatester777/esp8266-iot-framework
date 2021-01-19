@@ -1,5 +1,6 @@
 #include <States.h>
 #include <StatusLEDController.h>
+#include <WebServer.h>
 
 uint32_t measuredPower = 0;
 bool enableMeasurePower = false;
@@ -11,7 +12,6 @@ State *stateOperationMode_PowerOff;
 State *stateOperationMode_PowerOn;
 Fsm *fsmOperationMode;
 
-
 void onEnter_OperationMode_ManualOff()
 {
   Serial.println("Entering state: OperationMode_ManualOff");
@@ -21,6 +21,8 @@ void onEnter_OperationMode_ManualOff()
     configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, LOW);
+  outputStatus = LOW;
+  GUI.publishStatus();
 }
 
 void onEnter_OperationMode_ManualOn()
@@ -32,6 +34,8 @@ void onEnter_OperationMode_ManualOn()
     configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, HIGH);
+  outputStatus = HIGH;
+  GUI.publishStatus();
 }
 
 void onEnter_OperationMode_PowerOff()
@@ -43,6 +47,8 @@ void onEnter_OperationMode_PowerOff()
     configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, LOW);
+  outputStatus = LOW;
+  GUI.publishStatus();
 }
 
 void onEnter_OperationMode_PowerOn()
@@ -54,16 +60,18 @@ void onEnter_OperationMode_PowerOn()
     configManager.save(SCOPE_SETTINGS);
   }
   digitalWrite(RelayPin, HIGH);
+  outputStatus = HIGH;
+  GUI.publishStatus();
 }
 
 void onTransition_OperationMode_Change()
 {
-  
+  statusLEDController.start(Long);
 }
 
 void onTransition_OnOff_Change()
 {
-
+  statusLEDController.start(Short);
 }
 
 void fsm_setup()

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { createGlobalStyle, css } from "styled-components";
 import { normalize } from "styled-normalize";
-import { Loader, Menu as MenuIcon, Info, Eye, EyeOff } from "react-feather";
+import { Loader, Menu as MenuIcon, Info, Eye, EyeOff, Repeat, Check } from "react-feather";
 import PropTypes from "prop-types";
 import MaskedInput from "react-text-mask";
 
@@ -128,6 +128,36 @@ export const Button = ({ name, title, onClick, isSubmit, isReset, isCancel, isDi
     return (<button name={name} className={className} type={type} onClick={onClick}>{title}</button>);
 }
 
+export const IconButton = ({ name, icon, title, onClick, isSubmit, isReset, isCancel, isDisabled, isRed, marginRight }) => {
+    let className = "button";
+    let type = "button";
+
+    if (isSubmit) {
+        type = "submit";
+    } else if (isReset) {
+        type = "reset";
+    }
+
+    if (isDisabled) {
+        className = "button-disabled";
+        onClick = null;
+    }
+
+    if (isCancel) {
+        className = "button-cancel";
+    }
+
+    if (isRed) {
+        className = "button-red";
+    }
+
+    if (marginRight) {
+        className += " multibutton";
+    }
+
+    return (<button name={name} className={className} type={type} onClick={onClick} style={{ minWidth: "1em" }}>{icon}{title}</button>);
+}
+
 export const SubmitButton = ({ title, onClick, isDisabled = false }) => {
     return <Button title={title} onClick={onClick} isDisabled={isDisabled} isSubmit={true} />;
 }
@@ -147,7 +177,7 @@ export const RedButton = ({ title, onClick, isDisabled = false }) => {
 }
 
 export const Spinner = () => (
-    <span className="spinner"><Loader /></span>
+    <span className="spinner"><Loader size={48} /></span>
 );
 
 export const Status = ({ type, text, showSpinner }) => (
@@ -273,28 +303,80 @@ export const Checkbox = (props) => {
 }
 
 export const NumericInput = (props) => {
+    const regexp = new RegExp(`^-?[0-9]*$`);
+
+    let name = props.control.name;
+    let min = props.control.min;
+    let max = props.control.max;
+    let initValue = props.state[name];
+
+    const isValid = (value, min, max) => {
+        let ret = (!isNaN(Number(value)) && value !== '' && value !== '-' &&
+            (min === undefined || value >= min) &&
+            (max === undefined || value <= max));
+        return ret;
+    }
+
+    const [internalValue, setInternalValue] = useState(initValue);
+    const [valid, setValid] = useState(isValid(initValue, min, max));
+
     if (!checkControlVisible(props.control, props.state)) {
         return null;
     }
 
-    let onChangeHandler = function (event) {
-        let { value } = event.target;
-        let newState = {};
-        newState[props.control.name] = Number(value);
-        props.onChangeValue(newState);
-    };
-
-    let name = props.control.name;
     let isReadOnly = false;
+
     if (props.control.hasOwnProperty("read_only")) {
         isReadOnly = props.control.read_only;
     }
+
+    let onChange = (event) => {
+        const newValue = event.target.value.trim();
+
+        if (newValue === '') {
+            setValid(false);
+            setInternalValue(newValue);
+            return;
+        } else if (regexp.test(newValue)) {
+            setInternalValue(newValue);
+            let newValid = isValid(newValue, min, max);
+            console.log(newValue, newValid)
+            setValid(newValid);
+            if (newValid) {
+                let newState = {};
+                newState[props.control.name] = Number(newValue);
+                props.onChangeValue(newState);
+            }
+        } else {
+            setValid(false);
+        }
+    }
+
+    let onBlur = () => {
+        if (internalValue < min) {
+            setInternalValue(min);
+        } else if (internalValue > max) {
+            setInternalValue(max);
+        } else {
+            setInternalValue(initValue);
+        }
+        setValid(true);
+        let newState = {};
+        newState[props.control.name] = Number(internalValue);
+        props.onChangeValue(newState);
+    }
+
     return (
         <p>
             <label htmlFor={name}>
                 <b>{props.control.translation}</b>:
             </label>
-            <input id={name} name={name} type="text" onChange={onChangeHandler} value={props.state[name]} readOnly={isReadOnly} />
+            <input id={name} name={name}
+                className={valid ? '' : 'invalid'}
+                type="text" onChange={onChange}
+                onBlur={onBlur}
+                value={internalValue}
+                readOnly={isReadOnly} />
         </p>
     );
 }
@@ -492,9 +574,9 @@ export const Select = (props) => {
                     props.control.options.map((option) => {
                         let selected = (option.value === props.state[name]) ? "selected" : "";
                         if (isReadOnly) {
-                            return selected ? <option value={option.value} selected={selected}>{option.text}</option> : null;
+                            return selected ? <option value={option.value} selected={selected}>{props.i18n.get(option.text)}</option> : null;
                         } else {
-                            return <option value={option.value} selected={selected}>{option.text}</option>;
+                            return <option value={option.value} selected={selected}>{props.i18n.get(option.text)}</option>;
                         }
                     })
                 }
@@ -585,6 +667,119 @@ export const TestStatus = (props) => {
                 : null
             }
 
+        </p>
+    );
+}
+
+export const ValueDisplay = (props) => {
+    let value = props.i18n.get(`${props.name}.value.unknown`);
+
+    let label = props.i18n.get(props.name);
+    let valueStyle = "value-display";
+    if (props.isDisabled) {
+        valueStyle = "value-display-disabled";
+        value = props.i18n.get(`${props.name}.value.disabled`)
+    } else if (props.value !== null) {
+        value = props.i18n.get(`${props.name}.value`, [["{value}", props.value]]);
+    }
+
+    return (
+        <p className="status-row">
+            <div className="status-display-label">{label}</div>
+            <div>
+                <div className={valueStyle}>{value}</div>
+            </div>
+
+        </p>
+    );
+}
+
+export const SelectDisplay = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
+        return null;
+    }
+
+    let name = props.control.name;
+    let isReadOnly = false;
+    let infoKeyName = `${name}_info`;
+
+    let onChangeHandler = function (value) {
+        let newState = {};
+        newState[props.control.name] = value;
+        props.onChangeValue(newState);
+    };
+
+    let labelContent = <>{props.i18n.get(props.control.label)}</>;
+
+    let infoText = props.state[infoKeyName] ? <div>{props.control.translation_info}</div> : null;
+
+    return (
+        <p className="status-row">
+            <div className="status-label">{labelContent}{infoText}</div>
+            <div style={{ display: "grid" }}>
+                {
+                    props.control.options.map((option) => {
+                        let style = "select-display-button";
+                        let isDisabled = false;
+                        let text = option.text;
+                        if (option.value === props.state[name]) {
+                            style = "select-display-button-active";
+                            isDisabled = true;
+                            text = `${option.text}.active`;
+                        }
+                        return <button className={style} onClick={() => { onChangeHandler(option.value) }} disabled={isDisabled}>{props.i18n.get(text)}</button>;
+                    })
+                }
+            </div>
+        </p>
+    );
+}
+
+export const OnOffControll = (props) => {
+    if (!checkControlVisible(props.control, props.state)) {
+        return null;
+    }
+
+    let onOnHandler = function (event) {
+        let newState = {};
+        newState[props.control.name] = 1;
+        props.onChangeValue(newState);
+    };
+
+    let onOffHandler = function (event) {
+        let newState = {};
+        newState[props.control.name] = 0;
+        props.onChangeValue(newState);
+    };
+
+    let name = props.control.name;
+
+    let statusIndicatorStyle = "status-indicator-off";
+    let onStyle = "status-button-on";
+    let offStyle = "status-button-off";
+
+    if (props.state[name] == 1) {
+        statusIndicatorStyle = "status-indicator-on";
+        onStyle = "status-button-disabled";
+    } else {
+        offStyle = "status-button-disabled";
+    }
+
+    return (
+        <p className="status-row">
+            <div className="status-display-label">
+                {props.control.translation}
+            </div>
+            <div style={{ height: "3em" }}>
+                <div className={statusIndicatorStyle}></div>
+                {!props.isReadOnly ?
+                    <>
+                        <button className={onStyle} style={{ marginRight: "1em" }} onClick={onOnHandler} disabled={props.state[name] == 1}>{props.onTranslation}</button>
+                        <button className={offStyle} onClick={onOffHandler} disabled={props.state[name] == 0}>{props.offTranslation}</button>
+                    </>
+                    : null}
+
+            </div>
         </p>
     );
 }
