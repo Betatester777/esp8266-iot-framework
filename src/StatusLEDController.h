@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#define LED_INDICATION_PAUSE 10000
+
 enum LEDSequenceTypes
 {
     Idle,
@@ -12,7 +14,14 @@ enum LEDSequenceTypes
     Long,
     Constant,
     FastBlinking,
-    SlowBlinking
+    SlowBlinking,
+    //Operation modes
+    FactorySettingsIndication,
+    WifiConnectionFailedIndication,
+    WifiConnectionSuccessIndication,
+    ModbusConnectionFailedIndication,
+    FactoryResetConfirmation,
+    ChangeOperationModeConfirmation
 };
 
 class SequenceFrame
@@ -26,7 +35,7 @@ public:
 class Sequence
 {
 public:
-    public:
+public:
     Sequence(uint8_t type);
     Sequence(uint8_t type, bool playInLoop);
     void addFrame(uint8_t status, unsigned int duration);
@@ -34,7 +43,8 @@ public:
     bool next();
     SequenceFrame getCurrent();
     uint8_t getType();
-    private:
+
+private:
     uint8_t _type;
     std::vector<SequenceFrame> _frames;
     int _currentFrameIndex;

@@ -131,7 +131,7 @@ void loop()
     {
       smaModbusSlave->setHostAndPort(configManager.server.serverHost, configManager.server.serverPort);
 
-      smaModbusSlave->_readRegister();
+      int result=smaModbusSlave->_readRegister();
 
       if (configManager.settings.enableStatusLED)
       {

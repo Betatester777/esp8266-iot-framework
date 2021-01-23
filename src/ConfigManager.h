@@ -2,10 +2,7 @@
 #define __CONFIG_MGR_H__
 
 #include "IPAddress.h"
-#include "ArduinoJson.h"
-#include "WebServer.h"
 #include <generated/config.h>
-
 //data that needs to be persisted for other parts of the framework
 
 #define SIZE_DEVICE_INFO 32 //allocate 32 bytes to have room for future expansion
@@ -18,14 +15,6 @@
 #define SCOPE_SERVER_TEST 0x20
 #define SCOPE_TIMER 0x40
 #define SCOPE_SETTINGS 0x80
-
-struct DeviceInfo
-{
-    uint32_t serialNumber;
-};
-
-
-
 class ConfigManager
 {
 
@@ -55,7 +44,6 @@ public:
     String converIPv4ToString(uint32_t ip);
     uint32_t converStringToIPv4(String ipString);
 private:
-    DeviceInfo _deviceInfo;
     uint8_t checksum(uint8_t *byteArray, unsigned long length);
 };
 

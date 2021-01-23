@@ -11,8 +11,8 @@
 #define ButtonPin 0
 #define KeyBounce 50
 #define ButtonShortPressDuration 200
-#define ButtonLongPressDuration 400
-#define ButtonConstantPressDuration 10000
+#define ButtonLongPressDuration 10000
+#define ButtonConstantPressDuration 30000
 #define ButtonIdleDuration 500
 #define ButtonMode INPUT_PULLUP
 
@@ -31,15 +31,6 @@ enum ProtectionType
 	HARDWARE
 };
 
-#include <sstream>
-
-template <typename T>
-std::string tostring(const T &t)
-{
-	std::ostringstream ss;
-	ss << t;
-	return ss.str();
-}
 
 struct TimerItem
 {

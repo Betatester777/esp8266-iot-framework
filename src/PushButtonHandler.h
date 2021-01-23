@@ -3,6 +3,20 @@
 
 #include <Arduino.h>
 
+enum ButtonEvent { 
+  Release,
+  ShortPressDetect,
+  ShortPressConfirm, 
+  ShortPressConfirm_x2,
+  ShortPressConfirm_x3,
+  ShortPressConfirm_x4,
+  ShortPressConfirm_x5,
+  LongPressDetect,
+  LongPressConfirm,
+  ConstantPressDetect,
+  ConstantPressConfirm
+};
+
 class PushButtonHandler
 {
 private:

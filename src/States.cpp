@@ -66,12 +66,12 @@ void onEnter_OperationMode_PowerOn()
 
 void onTransition_OperationMode_Change()
 {
-  statusLEDController.start(Long);
+  statusLEDController.start(ChangeOperationModeConfirmation);
 }
 
 void onTransition_OnOff_Change()
 {
-  statusLEDController.start(Short);
+  //statusLEDController.start(Short);
 }
 
 void fsm_setup()

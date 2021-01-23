@@ -1,23 +1,8 @@
 #ifndef __STATES_H__
 #define __STATES_H__
 
-#include <Ticker.h>
 #include <StateMachine.h>
 #include <ConfigManager.h>
-
-enum ButtonEvent { 
-  Release,
-  ShortPressDetect,
-  ShortPressConfirm, 
-  ShortPressConfirm_x2,
-  ShortPressConfirm_x3,
-  ShortPressConfirm_x4,
-  ShortPressConfirm_x5,
-  LongPressDetect,
-  LongPressConfirm,
-  ConstantPressDetect,
-  ConstantPressConfirm
-};
 
 #define MANUAL_OFF "OperationMode_ManualOff"
 #define MANUAL_ON "OperationMode_ManualOn"
@@ -41,7 +26,6 @@ enum ButtonEvent {
 
 #define SERVER_ADDRESS_TYPE_IP 0
 #define SERVER_ADDRESS_TYPE_DNS 1
-
 
 void onEnter_OperationMode_ManualOff();
 

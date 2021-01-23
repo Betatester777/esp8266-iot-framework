@@ -2,7 +2,8 @@
 #include <Arduino.h>
 #include <ConfigManager.h>
 #include <WiFiManager.h>
-#include <sstream>
+#include "ArduinoJson.h"
+#include "WebServer.h"
 
 //class functions
 bool ConfigManager::begin(int numBytes)

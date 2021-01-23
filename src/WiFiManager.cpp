@@ -1,6 +1,7 @@
 #include <WiFiManager.h>
 #include <ESP8266WiFi.h>
 #include <ConfigManager.h>
+#include <StatusLEDController.h>
 
 //create global object
 WifiManager wifiManager;
