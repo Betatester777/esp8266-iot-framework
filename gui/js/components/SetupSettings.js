@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Form, Button, Spinner, NumericInput } from "./UiComponents";
+import { Form, Button, Spinner, NumericInputControl } from "./UiComponents";
 
 export default class SetupSettings extends React.Component {
     constructor(props) {
@@ -35,8 +35,8 @@ export default class SetupSettings extends React.Component {
                 <div>
                     <h2>{this.i18n.get("setup.settings.content.title")}</h2>
                     <Form>
-                        <NumericInput control={this.controls.powerThresholdHigh} state={apiState} onChangeValue={this.onChangeValue} />
-                        <NumericInput control={this.controls.powerThresholdLow} state={apiState} onChangeValue={this.onChangeValue} />
+                        <NumericInputControl control={this.controls.powerThresholdHigh} state={apiState} mobile={true} onChangeValue={this.onChangeValue} />
+                        <NumericInputControl control={this.controls.powerThresholdLow} state={apiState} mobile={true} onChangeValue={this.onChangeValue} />
                         <p>
                             <Button name="buttonSave" title={this.i18n.get("setup.settings.control.save")} onClick={this.props.context.save} isDisabled={!isSaveEnabled} />
                         </p>

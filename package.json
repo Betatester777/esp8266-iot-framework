@@ -47,6 +47,7 @@
     "preact-compat": "^3.19.0",
     "prop-types": "^15.7.2",
     "react-feather": "^2.0.9",
+    "react-numeric-input": "^2.2.3",
     "react-router-dom": "^5.2.0",
     "react-text-mask": "^5.4.3",
     "styled-components": "^5.2.1",

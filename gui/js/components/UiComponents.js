@@ -4,6 +4,7 @@ import { normalize } from "styled-normalize";
 import { Loader, Menu as MenuIcon, Info, Eye, EyeOff, Repeat, Check } from "react-feather";
 import PropTypes from "prop-types";
 import MaskedInput from "react-text-mask";
+import NumericInput from 'react-numeric-input';
 
 
 export const cPrimary = "#0055ff";
@@ -302,23 +303,12 @@ export const Checkbox = (props) => {
     );
 }
 
-export const NumericInput = (props) => {
-    const regexp = new RegExp(`^-?[0-9]*$`);
-
+export const NumericInputControl = (props) => {
     let name = props.control.name;
     let min = props.control.min;
     let max = props.control.max;
     let initValue = props.state[name];
 
-    const isValid = (value, min, max) => {
-        let ret = (!isNaN(Number(value)) && value !== '' && value !== '-' &&
-            (min === undefined || value >= min) &&
-            (max === undefined || value <= max));
-        return ret;
-    }
-
-    const [internalValue, setInternalValue] = useState(initValue);
-    const [valid, setValid] = useState(isValid(initValue, min, max));
 
     if (!checkControlVisible(props.control, props.state)) {
         return null;
@@ -330,39 +320,9 @@ export const NumericInput = (props) => {
         isReadOnly = props.control.read_only;
     }
 
-    let onChange = (event) => {
-        const newValue = event.target.value.trim();
-
-        if (newValue === '') {
-            setValid(false);
-            setInternalValue(newValue);
-            return;
-        } else if (regexp.test(newValue)) {
-            setInternalValue(newValue);
-            let newValid = isValid(newValue, min, max);
-            console.log(newValue, newValid)
-            setValid(newValid);
-            if (newValid) {
-                let newState = {};
-                newState[props.control.name] = Number(newValue);
-                props.onChangeValue(newState);
-            }
-        } else {
-            setValid(false);
-        }
-    }
-
-    let onBlur = () => {
-        if (internalValue < min) {
-            setInternalValue(min);
-        } else if (internalValue > max) {
-            setInternalValue(max);
-        } else {
-            setInternalValue(initValue);
-        }
-        setValid(true);
+    let onChange = (newValue) => {
         let newState = {};
-        newState[props.control.name] = Number(internalValue);
+        newState[props.control.name] = Number(newValue);
         props.onChangeValue(newState);
     }
 
@@ -370,12 +330,11 @@ export const NumericInput = (props) => {
         <p>
             <label htmlFor={name}>
                 <b>{props.control.translation}</b>:
-            </label>
-            <input id={name} name={name}
-                className={valid ? '' : 'invalid'}
-                type="text" onChange={onChange}
-                onBlur={onBlur}
-                value={internalValue}
+        </label>
+            <NumericInput id={name} name={name} min={min} max={max} value={initValue}
+                onChange={onChange}
+                mobile={true}
+                value={initValue}
                 readOnly={isReadOnly} />
         </p>
     );

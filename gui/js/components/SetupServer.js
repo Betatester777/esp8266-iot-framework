@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Form, Button, Spinner, TextInput, NumericInput, OptGroupSelect } from "./UiComponents";
+import { Form, Button, Spinner, TextInput, NumericInputControl, OptGroupSelect } from "./UiComponents";
 
 export default class SetupServer extends React.Component {
     constructor(props) {
@@ -54,7 +54,7 @@ export default class SetupServer extends React.Component {
                         </p>
                         {
                             this.state.showCustomPort ?
-                                <NumericInput control={this.controls.serverPort} state={apiState} onChangeValue={this.onChangeValue} />
+                                <NumericInputControl control={this.controls.serverPort} state={apiState} onChangeValue={this.onChangeValue} />
                                 : null
                         }
                         <p>
