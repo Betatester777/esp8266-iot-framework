@@ -6,7 +6,7 @@
 #include <Fetch.h>
 #include <ConfigManager.h>
 #include <TimeSync.h>
-#include <States.h>
+#include <OperationModeMachine.h>
 #include <PushButtonHandler.h>
 #include <StatusLEDController.h>
 #include <SMA/SMAModbusSlave.h>
@@ -92,7 +92,7 @@ void setup()
   String deviceName = configManager.getDeviceName();
   wifiManager.begin(deviceName);
   timeSync.begin();
-  fsm_setup();
+  operationModeMachineSetup();
   pushButtonHandler.begin(ButtonPin, ButtonMode, &onButtonEvent);
   statusLEDController.begin(LEDPinSwitch, true);
 

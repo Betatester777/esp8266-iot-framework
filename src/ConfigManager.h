@@ -15,6 +15,9 @@
 #define SCOPE_SERVER_TEST 0x20
 #define SCOPE_TIMER 0x40
 #define SCOPE_SETTINGS 0x80
+
+#define SERVER_ADDRESS_TYPE_IP 0
+#define SERVER_ADDRESS_TYPE_DNS 1
 class ConfigManager
 {
 

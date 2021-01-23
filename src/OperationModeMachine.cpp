@@ -1,4 +1,4 @@
-#include <States.h>
+#include <OperationModeMachine.h>
 #include <StatusLEDController.h>
 #include <WebServer.h>
 
@@ -74,7 +74,7 @@ void onTransition_OnOff_Change()
   //statusLEDController.start(Short);
 }
 
-void fsm_setup()
+void operationModeMachineSetup()
 {
   pinMode(RelayPin, OUTPUT);
 
@@ -118,5 +118,5 @@ void fsm_setup()
   fsmOperationMode->add_transition(stateOperationMode_ManualOff, stateOperationMode_PowerOff, TRIGGER_OPERATION_MODE_POWER, &onTransition_OperationMode_Change);
   fsmOperationMode->add_transition(stateOperationMode_ManualOn, stateOperationMode_PowerOff, TRIGGER_OPERATION_MODE_POWER, &onTransition_OperationMode_Change);
 
-  Serial.println("Setup FSM END");
+  Serial.println("Setup OperationMode state machine done!");
 }

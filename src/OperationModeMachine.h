@@ -24,9 +24,6 @@
 #define OUTPUT_OFF 0
 #define OUTPUT_ON 1
 
-#define SERVER_ADDRESS_TYPE_IP 0
-#define SERVER_ADDRESS_TYPE_DNS 1
-
 void onEnter_OperationMode_ManualOff();
 
 void onEnter_OperationMode_ManualOn();
@@ -40,7 +37,7 @@ void onTransition_OnOff_Change();
 
 void readMeasuredPower();
 
-void fsm_setup();
+void operationModeMachineSetup();
 
 extern State * stateOperationMode_ManualOff;
 extern State * stateOperationMode_ManualOn;
