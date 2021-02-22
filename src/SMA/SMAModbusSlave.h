@@ -15,12 +15,12 @@ public:
   void setHostAndPort(String serverHost, uint16_t serverPort);
   int getValue();
   static bool doConnect;
-  int _readRegister();
-  String _runTest();
+  int readRegister();
+  String runTest();
 
-  void resetTimer(unsigned long delay);
   bool isTimerExpired();
   void startTimer(unsigned long delay);
+  void stopTimer();
 
 private:
   WiFiClient *client;
@@ -36,6 +36,7 @@ private:
   uint16_t _startAddress;
   uint16_t _quantityOfRegisters;
   uint32_t _registerValue;
+  bool _isTimerStarted;
   unsigned long _delay;
   unsigned long _timer;
 };

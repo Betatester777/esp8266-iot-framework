@@ -5,6 +5,7 @@
 #include <DNSServer.h>
 #include <ESP8266mDNS.h>
 #include <memory>
+#include <OperationModeStateMachine.h>
 class WifiManager
 {
 private:
@@ -23,6 +24,7 @@ private:
     void stopCaptivePortal();
     void connectNewWifi(String newSSID, String newPass);
     void startMDNS();
+
 public:
     void begin(String apName);
     void loop();
@@ -33,6 +35,7 @@ public:
     void setNewWifi(String newSSID, String newPass, bool useDHCP, uint32_t newIp, uint32_t newSub, uint32_t newGw, uint32_t newDns);
     String scanNetworks();
     String getMACAddress();
+    void notifySuccesfullConnection(String hint);
 };
 
 extern WifiManager wifiManager;

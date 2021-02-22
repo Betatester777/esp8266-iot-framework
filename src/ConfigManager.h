@@ -37,7 +37,12 @@ public:
     bool testConnection;
     String testConnectionResult;
 
-    bool begin(int numBytes = 512);
+    bool enableMeasurePower;
+    uint32_t measuredPower;
+    uint8_t outputStatus;
+
+    int begin(int numBytes = 512);
+    int load();
     String getDeviceName();
     int save(uint8_t scope);
     void reset(uint8_t scope);
@@ -46,6 +51,7 @@ public:
     int setJSONString(uint8_t scope, String config);
     String converIPv4ToString(uint32_t ip);
     uint32_t converStringToIPv4(String ipString);
+
 private:
     uint8_t checksum(uint8_t *byteArray, unsigned long length);
 };

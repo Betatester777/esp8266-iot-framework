@@ -1,4 +1,4 @@
-#include <StateMachine.h>
+#include <StateMachineBase.h>
 
 State::State(String key, void (*on_enter)(), void (*on_state)(), void (*on_exit)())
     : key(key),
@@ -8,16 +8,15 @@ State::State(String key, void (*on_enter)(), void (*on_state)(), void (*on_exit)
 {
 }
 
-Fsm::Fsm(State *initial_state)
-    : m_current_state(initial_state),
-      m_transitions(NULL),
+StateMachineBase::StateMachineBase()
+    : m_transitions(NULL),
       m_num_transitions(0),
       m_num_timed_transitions(0),
       m_initialized(false)
 {
 }
 
-Fsm::~Fsm()
+StateMachineBase::~StateMachineBase()
 {
   free(m_transitions);
   free(m_timed_transitions);
@@ -25,46 +24,47 @@ Fsm::~Fsm()
   m_timed_transitions = NULL;
 }
 
-String Fsm::get_current_state_key()
+void StateMachineBase::set_initial_state(State *initial_state)
+{
+  m_current_state = initial_state;
+   Serial.println("Initial state: " + get_current_state_key());
+}
+
+String StateMachineBase::get_current_state_key()
 {
   return m_current_state->key;
 }
 
-void Fsm::add_transition(State *state_from, State *state_to, int event,
-                         void (*on_transition)())
+void StateMachineBase::add_transition(State *state_from, State *state_to, int event, void (*on_transition)())
 {
   if (state_from == NULL || state_to == NULL)
     return;
 
-  Transition transition = Fsm::create_transition(state_from, state_to, event,
-                                                 on_transition);
+  Transition transition = StateMachineBase::create_transition(state_from, state_to, event, on_transition);
   m_transitions = (Transition *)realloc(m_transitions, (m_num_transitions + 1) * sizeof(Transition));
   m_transitions[m_num_transitions] = transition;
   m_num_transitions++;
 }
 
-void Fsm::add_timed_transition(State *state_from, State *state_to,
-                               unsigned long interval, void (*on_transition)())
+void StateMachineBase::add_timed_transition(State *state_from, State *state_to,
+                                            unsigned long interval, void (*on_transition)())
 {
   if (state_from == NULL || state_to == NULL)
     return;
 
-  Transition transition = Fsm::create_transition(state_from, state_to, 0,
-                                                 on_transition);
+  Transition transition = StateMachineBase::create_transition(state_from, state_to, 0, on_transition);
 
   TimedTransition timed_transition;
   timed_transition.transition = transition;
   timed_transition.start = 0;
   timed_transition.interval = interval;
 
-  m_timed_transitions = (TimedTransition *)realloc(
-      m_timed_transitions, (m_num_timed_transitions + 1) * sizeof(TimedTransition));
+  m_timed_transitions = (TimedTransition *)realloc(m_timed_transitions, (m_num_timed_transitions + 1) * sizeof(TimedTransition));
   m_timed_transitions[m_num_timed_transitions] = timed_transition;
   m_num_timed_transitions++;
 }
 
-Fsm::Transition Fsm::create_transition(State *state_from, State *state_to,
-                                       int event, void (*on_transition)())
+StateMachineBase::Transition StateMachineBase::create_transition(State *state_from, State *state_to, int event, void (*on_transition)())
 {
   Transition t;
   t.state_from = state_from;
@@ -75,24 +75,23 @@ Fsm::Transition Fsm::create_transition(State *state_from, State *state_to,
   return t;
 }
 
-void Fsm::trigger(int event)
+void StateMachineBase::trigger(int event)
 {
   if (m_initialized)
   {
     // Find the transition with the current state and given event.
     for (int i = 0; i < m_num_transitions; ++i)
     {
-      if (m_transitions[i].state_from == m_current_state &&
-          m_transitions[i].event == event)
+      if (m_transitions[i].state_from == m_current_state && m_transitions[i].event == event)
       {
-        Fsm::make_transition(&(m_transitions[i]));
+        StateMachineBase::make_transition(&(m_transitions[i]));
         return;
       }
     }
   }
 }
 
-void Fsm::check_timed_transitions()
+void StateMachineBase::check_timed_transitions()
 {
   for (int i = 0; i < m_num_timed_transitions; ++i)
   {
@@ -108,7 +107,7 @@ void Fsm::check_timed_transitions()
         unsigned long now = millis();
         if (now - transition->start >= transition->interval)
         {
-          Fsm::make_transition(&(transition->transition));
+          StateMachineBase::make_transition(&(transition->transition));
           transition->start = 0;
         }
       }
@@ -116,25 +115,30 @@ void Fsm::check_timed_transitions()
   }
 }
 
-void Fsm::loop()
+void StateMachineBase::begin()
 {
-  // first run must exec first state "on_enter"
-  if (!m_initialized)
-  {
-    m_initialized = true;
-    if (m_current_state->on_enter != NULL)
-      m_current_state->on_enter();
+
+  m_initialized = true;
+
+  if (m_current_state->on_enter != NULL){
+    Serial.println("On enter initial state: " + get_current_state_key());
+    m_current_state->on_enter();
   }
-
-  if (m_current_state->on_state != NULL)
-    m_current_state->on_state();
-
-  Fsm::check_timed_transitions();
 }
 
-void Fsm::make_transition(Transition *transition)
+void StateMachineBase::loop()
 {
+  if (m_current_state->on_state != NULL)
+  {
+    m_current_state->on_state();
+  }
 
+  StateMachineBase::check_timed_transitions();
+}
+
+
+void StateMachineBase::make_transition(Transition *transition)
+{
   // Execute the handlers in the correct order.
   if (transition->state_from->on_exit != NULL)
     transition->state_from->on_exit();
@@ -153,6 +157,8 @@ void Fsm::make_transition(Transition *transition)
   {
     TimedTransition *ttransition = &m_timed_transitions[i];
     if (ttransition->transition.state_from == m_current_state)
+    {
       ttransition->start = now;
+    }
   }
 }

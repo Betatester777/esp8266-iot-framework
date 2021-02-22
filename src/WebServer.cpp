@@ -61,12 +61,10 @@ void WebServer::handleWebSocketMessage(AsyncWebSocketClient *client, void *arg, 
             switch (newOperationMode)
             {
             case OPERATION_MODE_MANUAL:
-                fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_MANUAL);
-                smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
+                operationModeStateMachine.trigger(TRIGGER_OPERATION_MODE_MANUAL);
                 break;
             case OPERATION_MODE_POWER:
-                fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_POWER);
-                smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
+                operationModeStateMachine.trigger(TRIGGER_OPERATION_MODE_POWER);
                 break;
             }
         }
@@ -77,11 +75,11 @@ void WebServer::handleWebSocketMessage(AsyncWebSocketClient *client, void *arg, 
             Serial.println("command: " + command + ", outputStatus=" + String(newOutputStatus));
             if (newOutputStatus == OUTPUT_ON)
             {
-                fsmOperationMode->trigger(TRIGGER_ON);
+                operationModeStateMachine.trigger(TRIGGER_ON);
             }
             else if (newOutputStatus == OUTPUT_OFF)
             {
-                fsmOperationMode->trigger(TRIGGER_OFF);
+                operationModeStateMachine.trigger(TRIGGER_OFF);
             }
         }
     }
@@ -123,8 +121,8 @@ String WebServer::status2json()
     jsonBuffer["timer"] = (uint8_t)configManager.timer.isComplete;
     jsonBuffer["settings"] = (uint8_t)configManager.settings.isComplete;
     jsonBuffer["operationMode"] = configManager.settings.operationMode;
-    jsonBuffer["measuredPower"] = measuredPower;
-    jsonBuffer["outputStatus"] = outputStatus;
+    jsonBuffer["measuredPower"] = configManager.measuredPower;
+    jsonBuffer["outputStatus"] = configManager.outputStatus;
 
     serializeJson(jsonBuffer, JSON);
     //Serial.println(JSON);
@@ -327,7 +325,7 @@ void WebServer::bindAll()
                [this](AsyncWebServerRequest *request) {
                    configManager.settings.operationMode = OPERATION_MODE_POWER;
                    configManager.save(SCOPE_SETTINGS);
-                   fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_POWER);
+                   operationModeStateMachine.trigger(TRIGGER_OPERATION_MODE_POWER);
                    Serial.println("change operation mode: POWER");
 
                    request->send(200, PSTR("'text/html'"), "OK");
@@ -337,20 +335,20 @@ void WebServer::bindAll()
                [this](AsyncWebServerRequest *request) {
                    configManager.settings.operationMode = OPERATION_MODE_MANUAL;
                    configManager.save(SCOPE_SETTINGS);
-                   fsmOperationMode->trigger(TRIGGER_OPERATION_MODE_MANUAL);
+                   operationModeStateMachine.trigger(TRIGGER_OPERATION_MODE_MANUAL);
                    Serial.println("change operation mode: MANUAL");
                    request->send(200, PSTR("'text/html'"), "OK");
                });
 
     server->on(PSTR("/api/status/output/on"), HTTP_GET,
                [this](AsyncWebServerRequest *request) {
-                   fsmOperationMode->trigger(TRIGGER_ON);
+                   operationModeStateMachine.trigger(TRIGGER_ON);
                    request->send(200, PSTR("'text/html'"), "OK");
                });
 
     server->on(PSTR("/api/status/output/off"), HTTP_GET,
                [this](AsyncWebServerRequest *request) {
-                   fsmOperationMode->trigger(TRIGGER_OFF);
+                   operationModeStateMachine.trigger(TRIGGER_OFF);
                    request->send(200, PSTR("'text/html'"), "OK");
                });
 

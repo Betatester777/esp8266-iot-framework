@@ -5,10 +5,19 @@
 #define PRODUCT_NAME "WiFiSolarPlug"
 #define CAPTIVE_PORTAL_IP "192.168.4.1"
 
-#define RelayPin 12
+//Sonoff
+//#define RelayPin 12
+//#define LEDPinSwitch 13
+//#define LEDPinPow 15
+//#define ButtonPin 0
+
+//HAMA
+#define RelayPin 14
 #define LEDPinSwitch 13
 #define LEDPinPow 15
-#define ButtonPin 0
+#define ButtonPin 3
+
+
 #define KeyBounce 50
 #define ButtonShortPressDuration 200
 #define ButtonLongPressDuration 10000

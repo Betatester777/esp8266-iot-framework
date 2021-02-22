@@ -35,7 +35,6 @@ public:
 class Sequence
 {
 public:
-public:
     Sequence(uint8_t type);
     Sequence(uint8_t type, bool playInLoop);
     void addFrame(uint8_t status, unsigned int duration);

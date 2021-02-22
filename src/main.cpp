@@ -6,23 +6,29 @@
 #include <Fetch.h>
 #include <ConfigManager.h>
 #include <TimeSync.h>
-#include <OperationModeMachine.h>
+#include <ConfigurationStateMachine.h>
+#include <ConnectionStateMachine.h>
+#include <OperationModeStateMachine.h>
 #include <PushButtonHandler.h>
 #include <StatusLEDController.h>
 #include <SMA/SMAModbusSlave.h>
 
+String lastOperationState = "";
+
 void onPowerChanged(uint32_t oldValue, uint32_t newValue)
 {
-  measuredPower = newValue;
-  Serial.println("Power measured: " + String(measuredPower));
+  configManager.measuredPower = newValue;
+  Serial.println("Power measured: " + String(configManager.measuredPower));
 
-  if (measuredPower > configManager.settings.powerThresholdHigh)
+  GUI.publishStatus();
+
+  if (configManager.measuredPower > configManager.settings.powerThresholdHigh)
   {
-    fsmOperationMode->trigger(TRIGGER_POWER_HIGH);
+    operationModeStateMachine.trigger(TRIGGER_POWER_HIGH);
   }
-  if (measuredPower < configManager.settings.powerThresholdLow)
+  if (configManager.measuredPower < configManager.settings.powerThresholdLow)
   {
-    fsmOperationMode->trigger(TRIGGER_POWER_LOW);
+    operationModeStateMachine.trigger(TRIGGER_POWER_LOW);
   }
 }
 
@@ -39,7 +45,7 @@ void onButtonEvent(int event)
     break;
   case ShortPressConfirm:
     Serial.println("ButtonEvent [ShortPressConfirm]");
-    fsmOperationMode->trigger(TRIGGER_TOGGLE_ON_OFF);
+    operationModeStateMachine.trigger(TRIGGER_TOGGLE_ON_OFF);
     break;
   case ShortPressConfirm_x2:
     Serial.println("ButtonEvent [ShortPressConfirm_x2]");
@@ -63,8 +69,7 @@ void onButtonEvent(int event)
     break;
   case LongPressConfirm:
     Serial.println("ButtonEvent [LongPressConfirm]");
-    fsmOperationMode->trigger(TRIGGER_CHANGE_OPERATION_MODE);
-    smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
+    operationModeStateMachine.trigger(TRIGGER_CHANGE_OPERATION_MODE);
     break;
   case ConstantPressDetect:
     Serial.println("ButtonEvent [ConstantPressDetect]");
@@ -78,70 +83,79 @@ void onButtonEvent(int event)
   }
 }
 
-String serverHost;
-
 void setup()
 {
   Serial.begin(115200);
   LittleFS.begin();
+  configurationStateMachine.begin();
   GUI.begin();
   configManager.begin();
-
-  //Create device ID from serial number
-
   String deviceName = configManager.getDeviceName();
+  connectionStateMachine.begin();
   wifiManager.begin(deviceName);
   timeSync.begin();
-  operationModeMachineSetup();
   pushButtonHandler.begin(ButtonPin, ButtonMode, &onButtonEvent);
   statusLEDController.begin(LEDPinSwitch, true);
-
+  operationModeStateMachine.begin();
   smaModbusSlave = new SMAModbusSlave(String(configManager.server.serverHost),
                                       configManager.server.serverPort,
                                       30775,
                                       2,
                                       &onPowerChanged);
-  smaModbusSlave->resetTimer(configManager.server.measureInterval * 1000);
 }
 
 void loop()
 {
-  //software interrupts
+  statusLEDController.loop();
+  configurationStateMachine.loop();
+  connectionStateMachine.loop();
+  operationModeStateMachine.loop();
   wifiManager.loop();
   updater.loop();
   pushButtonHandler.loop();
-  statusLEDController.loop();
-  fsmOperationMode->loop();
+  String configurationState = configurationStateMachine.get_current_state_key();
+  String connectionState = connectionStateMachine.get_current_state_key();
+  String operationState = operationModeStateMachine.get_current_state_key();
+
+  if (lastOperationState != operationState && (operationState == MANUAL_OFF || operationState == MANUAL_ON))
+  {
+    smaModbusSlave->stopTimer();
+  }
 
   if (configManager.testConnection)
   {
     Serial.println("Run connection test");
     smaModbusSlave->setHostAndPort(configManager.server.serverHost, configManager.server.serverPort);
-    configManager.testConnectionResult = smaModbusSlave->_runTest();
+    configManager.testConnectionResult = smaModbusSlave->runTest();
     Serial.println("Test result=" + configManager.testConnectionResult);
     configManager.testConnection = false;
     auto callback = serverConnectionTestQueue.back();
     callback();
   }
-  else if (smaModbusSlave->isTimerExpired())
+  else if (strcmp(configurationState.c_str(), CONFIGURED) == 0 &&
+           (strcmp(connectionState.c_str(), WIFI_CONNECTED) == 0 ||
+            strcmp(connectionState.c_str(), WIFI_AND_MODBUS_CONNECTED) == 0 ||
+            strcmp(connectionState.c_str(), MODBUS_CONNECTION_FAILED) == 0) &&
+           (operationState == POWER_OFF || operationState == POWER_ON))
   {
-    smaModbusSlave->startTimer(configManager.server.measureInterval * 1000);
-    String stateKey = fsmOperationMode->get_current_state_key();
-    if (stateKey == POWER_OFF || stateKey == POWER_ON)
+    if (smaModbusSlave->isTimerExpired() || lastOperationState == MANUAL_OFF || lastOperationState == MANUAL_ON)
     {
+      Serial.println("Timer is expired red MODBUS value");
       smaModbusSlave->setHostAndPort(configManager.server.serverHost, configManager.server.serverPort);
-
-      int result=smaModbusSlave->_readRegister();
+      smaModbusSlave->readRegister();
 
       if (configManager.settings.enableStatusLED)
       {
         statusLEDController.start(Short);
       }
 
+      smaModbusSlave->startTimer(configManager.server.measureInterval * 1000);
     }
   }
 
-  outputStatus = digitalRead(RelayPin);
+  lastOperationState = operationState;
+
+  configManager.outputStatus = digitalRead(RelayPin);
 
   delay(1);
 }

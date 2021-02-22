@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ConfigManager.h>
 #include <StatusLEDController.h>
+#include <ConnectionStateMachine.h>
 
 //create global object
 WifiManager wifiManager;
@@ -41,15 +42,20 @@ void WifiManager::begin(String deviceName)
     if (WiFi.waitForConnectResult() == WL_CONNECTED)
     {
         //connected
-        Serial.println(PSTR("Connected to stored WiFi details"));
-        Serial.println(WiFi.localIP());
+        notifySuccesfullConnection("Connected to stored WiFi details");
     }
     else
     {
         //captive portal
         startCaptivePortal(captivePortalName);
     }
+}
 
+void WifiManager::notifySuccesfullConnection(String hint)
+{
+    connectionStateMachine.trigger(TRIGGER_WIFI_CONNECTION_SUCCESS);
+    Serial.println(hint);
+    Serial.println(WiFi.localIP());
     startMDNS();
 }
 
@@ -154,15 +160,14 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
             if (!inCaptivePortal)
             {
                 WiFi.begin(oldSSID, oldPSK, 0, NULL, true);
-                if (WiFi.waitForConnectResult() != WL_CONNECTED)
+                if (WiFi.waitForConnectResult() == WL_CONNECTED)
                 {
-                    Serial.println(PSTR("Reconnection failed too"));
-                    startCaptivePortal(captivePortalName);
+                    notifySuccesfullConnection("Reconnection successful");
                 }
                 else
                 {
-                    Serial.println(PSTR("Reconnection successful"));
-                    Serial.println(WiFi.localIP());
+                    Serial.println(PSTR("Reconnection failed too"));
+                    startCaptivePortal(captivePortalName);
                 }
             }
         }
@@ -172,11 +177,7 @@ void WifiManager::connectNewWifi(String newSSID, String newPass)
             {
                 stopCaptivePortal();
             }
-
-            Serial.println(PSTR("New connection successful"));
-            Serial.println(WiFi.localIP());
-
-            startMDNS();
+            notifySuccesfullConnection("New connection successful");
         }
     }
 }
@@ -201,6 +202,7 @@ void WifiManager::startCaptivePortal(String apName)
     Serial.println(PSTR("Opened a captive portal"));
     Serial.println(PSTR("192.168.4.1"));
     inCaptivePortal = true;
+    connectionStateMachine.trigger(TRIGGER_WIFI_CONNECTION_FAIL);
 }
 
 //function to stop the captive portal
@@ -258,7 +260,8 @@ String WifiManager::scanNetworks()
     return json;
 }
 
-String WifiManager::getMACAddress(){
+String WifiManager::getMACAddress()
+{
     return WiFi.macAddress();
 }
 

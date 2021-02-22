@@ -1,5 +1,6 @@
 #include <PushButtonHandler.h>
-#include <OperationModeMachine.h>
+#include <OperationModeStateMachine.h>
+#include <generated/config.h>
 
 void print_uint64_t(uint64_t num)
 {

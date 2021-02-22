@@ -1,4 +1,5 @@
 #include <SMA/SMAModbusSlave.h>
+#include <ConnectionStateMachine.h>
 
 SMAModbusSlave::SMAModbusSlave(String serverHost, uint16_t serverPort, uint16_t startAddress, uint16_t quantityOfRegisters, void (*onValueChanged)(uint32_t oldValue, uint32_t newValue))
 {
@@ -14,16 +15,11 @@ SMAModbusSlave::SMAModbusSlave(String serverHost, uint16_t serverPort, uint16_t 
   _requestPayload = new SMARequest(_transactionId, _protocolId, 6, _unitId, _functionCode, _startAddress, _quantityOfRegisters);
 }
 
-void SMAModbusSlave::resetTimer(unsigned long delay)
-{
-  _delay=delay;
-  _timer = millis() - _delay;
-}
-
 bool SMAModbusSlave::isTimerExpired()
 {
   if (_delay > 0 && millis() > _timer + _delay)
   {
+    _delay = 0;
     return true;
   }
   return false;
@@ -31,8 +27,18 @@ bool SMAModbusSlave::isTimerExpired()
 
 void SMAModbusSlave::startTimer(unsigned long delay)
 {
-  _delay=delay;
-  _timer += _delay;
+  if (_delay == 0)
+  {
+    _delay = delay;
+    _timer = millis();
+    _isTimerStarted = true;
+    Serial.println("start timer for MODBUS get value: " + String(delay));
+  }
+}
+
+void SMAModbusSlave::stopTimer()
+{
+  _delay = 0;
 }
 
 void SMAModbusSlave::setHostAndPort(String serverHost, uint16_t serverPort)
@@ -41,7 +47,7 @@ void SMAModbusSlave::setHostAndPort(String serverHost, uint16_t serverPort)
   _serverPort = serverPort;
 }
 
-int SMAModbusSlave::_readRegister()
+int SMAModbusSlave::readRegister()
 {
   WiFiClient client;
   int32_t newValue = 0;
@@ -50,6 +56,7 @@ int SMAModbusSlave::_readRegister()
   if (retval != 1)
   {
     Serial.println(F("Connection failed."));
+    connectionStateMachine.trigger(TRIGGER_MODBUS_CONNECTION_FAIL);
     return 1;
   }
 
@@ -58,14 +65,15 @@ int SMAModbusSlave::_readRegister()
   char requestBytes[12];
   _requestPayload->getBytes(requestBytes, sizeof(requestBytes));
   client.write(requestBytes, sizeof(requestBytes));
-  Serial.print("sending: \n" + _requestPayload->toString());
+  Serial.print("sending buffer: \n" + _requestPayload->toString());
   unsigned long timeout = millis();
   while (client.available() < 11)
   {
     delay(1); // important to service the tcp stack
     if ((millis() - timeout) > 5000)
     {
-      Serial.println(">>> Client Timeout !");
+      Serial.println("MODBUS client timeout !");
+      connectionStateMachine.trigger(TRIGGER_MODBUS_CONNECTION_FAIL);
       client.stop();
       return 2;
     }
@@ -81,13 +89,13 @@ int SMAModbusSlave::_readRegister()
     result.push_back(client.read());
   }
 
-  Serial.println("Result: ");
-
   unsigned char *resultBuffer = &result[0];
   SMAResponse *response = new SMAResponse(resultBuffer, sizeof(resultBuffer));
-  Serial.println("received: \n" + response->toString());
+  Serial.println("received buffer: \n" + response->toString());
   newValue = response->getS32Value();
-  Serial.println(newValue);
+  Serial.println("received MODBUS value: " + String(newValue));
+
+  connectionStateMachine.trigger(TRIGGER_MODBUS_CONNECTION_SUCCESS);
 
   if (newValue != (int32_t)_registerValue)
   {
@@ -97,7 +105,7 @@ int SMAModbusSlave::_readRegister()
   return 0;
 }
 
-String SMAModbusSlave::_runTest()
+String SMAModbusSlave::runTest()
 {
   String JSON;
   StaticJsonDocument<1024> jsonBuffer;

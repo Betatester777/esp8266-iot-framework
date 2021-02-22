@@ -4,116 +4,21 @@
 #include <WiFiManager.h>
 #include "ArduinoJson.h"
 #include "WebServer.h"
+#include "ConfigurationStateMachine.h"
 
 //class functions
-bool ConfigManager::begin(int numBytes)
+int ConfigManager::begin(int numBytes)
 {
     EEPROM.begin(numBytes);
 
-    bool returnValue = true;
     testConnectionResult = "{}";
     testConnection = false;
 
-    uint32_t storedVersion;
-    uint8_t scopeChecksum = 0;
+    measuredPower = 0;
+    enableMeasurePower = false;
+    outputStatus = OUTPUT_OFF;
 
-    uint32_t startByte = 0;
-
-    uint8_t resetCopes = 0;
-
-    EEPROM.get(startByte, storedVersion);
-
-    startByte = sizeof(storedVersion);
-    Serial.println("Load [scope=LEGAL, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, legal);
-    EEPROM.get(startByte + sizeof(legal), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&legal), sizeof(legal)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=LEGAL]"));
-        resetCopes |= SCOPE_LEGAL;
-    }
-
-    startByte += sizeof(legal) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=WIFI, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, wifi);
-    EEPROM.get(startByte + sizeof(wifi), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&wifi), sizeof(wifi)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=WIFI]"));
-        resetCopes |= SCOPE_WIFI;
-        returnValue = false;
-    }
-
-    startByte += sizeof(wifi) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=TIME, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, time);
-    EEPROM.get(startByte + sizeof(time), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&time), sizeof(time)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=TIME]"));
-        resetCopes |= SCOPE_TIME;
-        returnValue = false;
-    }
-
-    startByte += sizeof(time) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=SERVER, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, server);
-    EEPROM.get(startByte + sizeof(server), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server), sizeof(server)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=SERVER]"));
-        resetCopes |= SCOPE_SERVER;
-        returnValue = false;
-    }
-
-    startByte += sizeof(server) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=SERVER_TEST, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, server_test);
-    EEPROM.get(startByte + sizeof(server_test), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server_test), sizeof(server_test)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=SERVER_TEST]"));
-        resetCopes |= SCOPE_SERVER_TEST;
-        returnValue = false;
-    }
-
-    startByte += sizeof(server_test) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=TIMER, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, timer);
-    EEPROM.get(startByte + sizeof(timer), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&timer), sizeof(timer)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=TIMER]"));
-        resetCopes |= SCOPE_TIMER;
-        returnValue = false;
-    }
-
-    startByte += sizeof(timer) + sizeof(scopeChecksum);
-    Serial.println("Load [scope=SETTINGS, start=" + String(startByte) + "]");
-    EEPROM.get(startByte, settings);
-    EEPROM.get(startByte + sizeof(settings), scopeChecksum);
-
-    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&settings), sizeof(settings)) || storedVersion != configVersion)
-    {
-        Serial.println(PSTR("Checksum mismatch [scope=SETTINGS]"));
-        resetCopes |= SCOPE_SETTINGS;
-        returnValue = false;
-    }
-
-    Serial.println("Load EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
-
-    if (resetCopes > 0)
-    {
-        reset(resetCopes);
-    }
-
-    return returnValue;
+    return load();
 }
 
 String ConfigManager::getDeviceName()
@@ -133,6 +38,8 @@ String ConfigManager::getDeviceName()
 
 void ConfigManager::reset(uint8_t scope)
 {
+    configurationStateMachine.trigger(TRIGGER_DELETE_CONFIGURATION);
+
     if ((scope & SCOPE_LEGAL) == SCOPE_LEGAL)
     {
         memcpy_P(&legal, &legalDefaults, sizeof(legal));
@@ -176,6 +83,131 @@ void ConfigManager::reset(uint8_t scope)
 
     save(scope);
     GUI.publishStatus();
+}
+
+int ConfigManager::load()
+{
+    int returnValue = -1;
+    uint32_t storedVersion;
+    uint8_t scopeChecksum = 0;
+
+    uint32_t startByte = 0;
+
+    uint8_t resetCopes = 0;
+
+    EEPROM.get(startByte, storedVersion);
+
+    startByte = sizeof(storedVersion);
+    Serial.println("Load [scope=LEGAL, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, legal);
+    EEPROM.get(startByte + sizeof(legal), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&legal), sizeof(legal)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=LEGAL]"));
+        resetCopes |= SCOPE_LEGAL;
+    }
+
+    startByte += sizeof(legal) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=WIFI, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, wifi);
+    EEPROM.get(startByte + sizeof(wifi), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&wifi), sizeof(wifi)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=WIFI]"));
+        resetCopes |= SCOPE_WIFI;
+    }
+
+    startByte += sizeof(wifi) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=WIFI_TEST, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, wifi_test);
+    EEPROM.get(startByte + sizeof(wifi_test), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&wifi_test), sizeof(wifi_test)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=WIFI_TEST]"));
+        resetCopes |= SCOPE_WIFI_TEST;
+    }
+
+    startByte += sizeof(wifi_test) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=TIME, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, time);
+    EEPROM.get(startByte + sizeof(time), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&time), sizeof(time)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=TIME]"));
+        resetCopes |= SCOPE_TIME;
+    }
+
+    startByte += sizeof(time) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SERVER, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, server);
+    EEPROM.get(startByte + sizeof(server), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server), sizeof(server)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SERVER]"));
+        resetCopes |= SCOPE_SERVER;
+    }
+
+    startByte += sizeof(server) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SERVER_TEST, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, server_test);
+    EEPROM.get(startByte + sizeof(server_test), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&server_test), sizeof(server_test)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SERVER_TEST]"));
+        resetCopes |= SCOPE_SERVER_TEST;
+    }
+
+    startByte += sizeof(server_test) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=TIMER, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, timer);
+    EEPROM.get(startByte + sizeof(timer), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&timer), sizeof(timer)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=TIMER]"));
+        resetCopes |= SCOPE_TIMER;
+    }
+
+    startByte += sizeof(timer) + sizeof(scopeChecksum);
+    Serial.println("Load [scope=SETTINGS, start=" + String(startByte) + "]");
+    EEPROM.get(startByte, settings);
+    EEPROM.get(startByte + sizeof(settings), scopeChecksum);
+
+    if (scopeChecksum != checksum(reinterpret_cast<uint8_t *>(&settings), sizeof(settings)) || storedVersion != configVersion)
+    {
+        Serial.println(PSTR("Checksum mismatch [scope=SETTINGS]"));
+        resetCopes |= SCOPE_SETTINGS;
+    }
+
+    Serial.println("Load EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
+
+    if (resetCopes > 0)
+    {
+        reset(resetCopes);
+        returnValue = 0;
+    }
+    else
+    {
+        Serial.println("Settings: " + String(settings.isComplete));
+        if (settings.isComplete)
+        {
+            Serial.println("!!!Trigger: " + String(TRIGGER_COMPLETE_CONFIGURATION));
+            configurationStateMachine.trigger(TRIGGER_COMPLETE_CONFIGURATION);
+            returnValue = 0;
+        }
+        else
+        {
+            configurationStateMachine.trigger(TRIGGER_UNCOMPLETE_CONFIGURATION);
+            returnValue = 1;
+        }
+    }
+    return returnValue;
 }
 
 int ConfigManager::save(uint8_t scope)
@@ -261,8 +293,21 @@ int ConfigManager::save(uint8_t scope)
     Serial.println("Save EEPROM " + String(startByte + sizeof(settings) + sizeof(scopeChecksum)));
     EEPROM.commit();
 
+    int returnValue = 0;
+
+    if (settings.isComplete)
+    {
+        configurationStateMachine.trigger(TRIGGER_COMPLETE_CONFIGURATION);
+        returnValue = 0;
+    }
+    else
+    {
+        configurationStateMachine.trigger(TRIGGER_UNCOMPLETE_CONFIGURATION);
+        returnValue = 1;
+    }
+
     GUI.publishStatus();
-    return 0;
+    return returnValue;
 }
 
 uint8_t ConfigManager::checksum(uint8_t *byteArray, unsigned long length)
@@ -375,6 +420,7 @@ String ConfigManager::getJSONString(uint8_t scope)
 
 uint8_t ConfigManager::setPreviousSetupScope()
 {
+
     if (settings.isComplete)
     {
         settings.isComplete = false;

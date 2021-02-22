@@ -1,5 +1,5 @@
 #include <StatusLEDController.h>
-#include <OperationModeMachine.h>
+#include <OperationModeStateMachine.h>
 
 StatusLEDController statusLEDController;
 
@@ -119,42 +119,42 @@ void StatusLEDController::begin(uint8_t ledPin, bool invert)
   //Device modes indications and confirmations
 
   _sequences.push_back(Sequence(FactorySettingsIndication, true));
-  _sequences[2].addFrame(HIGH, 1000);
-  _sequences[2].addFrame(LOW, 1000);
+  _sequences[8].addFrame(HIGH, 1000);
+  _sequences[8].addFrame(LOW, 1000);
 
   _sequences.push_back(Sequence(WifiConnectionSuccessIndication));
   for (int i = 0; i < 3; i++)
   {
-    _sequences[3].addFrame(HIGH, 1000);
-    _sequences[3].addFrame(LOW, 1000);
+    _sequences[9].addFrame(HIGH, 1000);
+    _sequences[9].addFrame(LOW, 1000);
   }
 
   _sequences.push_back(Sequence(WifiConnectionFailedIndication));
   for (int i = 0; i < 2; i++)
   {
-    _sequences[3].addFrame(HIGH, 500);
-    _sequences[3].addFrame(LOW, 500);
+    _sequences[10].addFrame(HIGH, 500);
+    _sequences[10].addFrame(LOW, 500);
   }
-  _sequences[3].addFrame(LOW, LED_INDICATION_PAUSE);
+  _sequences[10].addFrame(LOW, LED_INDICATION_PAUSE);
 
   _sequences.push_back(Sequence(ModbusConnectionFailedIndication));
   for (int i = 0; i < 4; i++)
   {
-    _sequences[3].addFrame(HIGH, 500);
-    _sequences[3].addFrame(LOW, 500);
+    _sequences[11].addFrame(HIGH, 500);
+    _sequences[11].addFrame(LOW, 500);
   }
-  _sequences[3].addFrame(LOW, LED_INDICATION_PAUSE);
+  _sequences[11].addFrame(LOW, LED_INDICATION_PAUSE);
 
   _sequences.push_back(Sequence(FactoryResetConfirmation));
   for (int i = 0; i < 20; i++)
   {
-    _sequences[3].addFrame(HIGH, 500);
-    _sequences[3].addFrame(LOW, 500);
+    _sequences[12].addFrame(HIGH, 500);
+    _sequences[12].addFrame(LOW, 500);
   }
 
   _sequences.push_back(Sequence(ChangeOperationModeConfirmation));
-  _sequences[3].addFrame(HIGH, 2000);
-  _sequences[3].addFrame(LOW, 100);
+  _sequences[13].addFrame(HIGH, 2000);
+  _sequences[13].addFrame(LOW, 100);
 }
 
 void StatusLEDController::start(uint8_t sequenceType)

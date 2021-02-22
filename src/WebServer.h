@@ -12,7 +12,6 @@
 #include <WiFiManager.h>
 #include <ConfigManager.h>
 #include <Updater.h>
-#include <OperationModeMachine.h>
 #include <queue>
 class WebServer
 {
